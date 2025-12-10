@@ -11,6 +11,13 @@ CREATE TABLE IF NOT EXISTS roles (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+INSERT INTO roles (nombre, descripcion) VALUES
+    ('Visitante', 'Usuario con permisos de solo lectura'),
+    ('Arbitro', 'Control de partidos y reportes de juego'),
+    ('Jugador', 'Acceso a inscripciones y seguimiento de resultados'),
+    ('Administrador', 'Control total del sistema')
+ON DUPLICATE KEY UPDATE descripcion = VALUES(descripcion);
+
 CREATE TABLE IF NOT EXISTS usuarios (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(120) NOT NULL,
@@ -23,6 +30,16 @@ CREATE TABLE IF NOT EXISTS usuarios (
     updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (rol_id) REFERENCES roles(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO usuarios (nombre, email, password_hash, rol_id, telefono, activo)
+SELECT 'Super Administrador', 'eisla@local.test', '$2y$12$V3vU5mR2SQeE/ABIBPyb/e.qcyA/p1WuelpOGEirv4lay4AzTphB6', r.id, NULL, 1
+FROM roles r
+WHERE r.nombre = 'Administrador'
+ON DUPLICATE KEY UPDATE
+    nombre = VALUES(nombre),
+    password_hash = VALUES(password_hash),
+    rol_id = VALUES(rol_id),
+    activo = 1;
 
 CREATE TABLE IF NOT EXISTS clubes (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
