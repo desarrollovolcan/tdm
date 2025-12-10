@@ -40,7 +40,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'created_at' => date(DATE_ATOM),
     ];
 
-    save_json(PLAYER_STORE, $jugadores);
+    if (!save_json(PLAYER_STORE, $jugadores)) {
+        $_SESSION['jugadores_error'] = 'No se pudo guardar el jugador. Verifica permisos de escritura.';
+        header('Location: jugadores.php');
+        exit;
+    }
+
     $_SESSION['jugadores_success'] = 'Jugador registrado correctamente.';
     header('Location: jugadores.php');
     exit;
@@ -49,7 +54,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (($_GET['action'] ?? '') === 'eliminar' && isset($_GET['id'])) {
     $id = $_GET['id'];
     $jugadores = array_values(array_filter($jugadores, fn($jugador) => ($jugador['id'] ?? '') !== $id));
-    save_json(PLAYER_STORE, $jugadores);
+    if (!save_json(PLAYER_STORE, $jugadores)) {
+        $_SESSION['jugadores_error'] = 'No se pudo eliminar el jugador en disco.';
+        header('Location: jugadores.php');
+        exit;
+    }
     $_SESSION['jugadores_success'] = 'Jugador eliminado correctamente.';
     header('Location: jugadores.php');
     exit;

@@ -14,6 +14,11 @@ function load_json(string $file): array
 {
     $path = storage_path($file);
     if (!file_exists($path)) {
+        if (!is_dir(dirname($path))) {
+            mkdir(dirname($path), 0777, true);
+        }
+
+        file_put_contents($path, '[]', LOCK_EX);
         return [];
     }
 
@@ -23,7 +28,7 @@ function load_json(string $file): array
     return is_array($data) ? $data : [];
 }
 
-function save_json(string $file, array $payload): void
+function save_json(string $file, array $payload): bool
 {
     $path = storage_path($file);
     $dir = dirname($path);
@@ -31,7 +36,13 @@ function save_json(string $file, array $payload): void
         mkdir($dir, 0777, true);
     }
 
-    file_put_contents($path, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    $bytes = file_put_contents(
+        $path,
+        json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+        LOCK_EX
+    );
+
+    return $bytes !== false;
 }
 
 function next_incremental_id(array $items, string $field = 'id'): int
