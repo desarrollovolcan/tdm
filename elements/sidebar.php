@@ -40,6 +40,17 @@
             </li>
             <li>
                 <a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
+                    <i class="flaticon-381-user-4"></i>
+                    <span class="nav-text">Entrenadores</span>
+                </a>
+                <ul aria-expanded="false" class="left">
+                    <li class="nav-text-icon-toggle">Entrenadores</li>
+                    <li><a class="dz-active" href="modulo-entrenadores.php">Panel del entrenador</a></li>
+                    <li><a class="dz-active" href="equipos.php">Grupos y equipos</a></li>
+                </ul>
+            </li>
+            <li>
+                <a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
                     <i class="flaticon-handshake"></i>
                     <span class="nav-text">Entrenamientos</span>
                 </a>
@@ -99,6 +110,42 @@
                     <li class="nav-text-icon-toggle">Reservas</li>
                     <li><a class="dz-active d-flex align-items-center gap-2" href="modulo-reservas.php"><i class="fa fa-calendar-plus"></i><span>Calendario de reservas</span></a></li>
                     <li><a class="dz-active d-flex align-items-center gap-2" href="sedes-mesas.php"><i class="fa fa-map-marker-alt"></i><span>Sedes, mesas y recursos</span></a></li>
+                </ul>
+            </li>
+            <li>
+                <a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
+                    <i class="flaticon-381-dollar"></i>
+                    <span class="nav-text">Planes y cobranzas</span>
+                </a>
+                <ul aria-expanded="false" class="left">
+                    <li class="nav-text-icon-toggle">Planes y cobranzas</li>
+                    <li><a class="dz-active" href="modulo-finanzas.php">Planes, membresías y pagos</a></li>
+                    <li><a class="dz-active" href="create-invoices.php">Crear facturas</a></li>
+                    <li><a class="dz-active" href="invoices.php">Listado de facturas</a></li>
+                    <li><a class="dz-active" href="wallet.php">Pagos y métodos</a></li>
+                </ul>
+            </li>
+            <li>
+                <a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
+                    <i class="flaticon-chat-3"></i>
+                    <span class="nav-text">Comunicación y chat</span>
+                </a>
+                <ul aria-expanded="false" class="left">
+                    <li class="nav-text-icon-toggle">Comunicación</li>
+                    <li><a class="dz-active" href="modulo-comunicaciones.php">Mensajería y notificaciones</a></li>
+                    <li><a class="dz-active" href="chat-home.php">Chat en vivo</a></li>
+                    <li><a class="dz-active" href="email-inbox.php">Notificaciones por correo</a></li>
+                </ul>
+            </li>
+            <li>
+                <a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
+                    <i class="flaticon-381-calendar-1"></i>
+                    <span class="nav-text">Reservas y recursos</span>
+                </a>
+                <ul aria-expanded="false" class="left">
+                    <li class="nav-text-icon-toggle">Reservas</li>
+                    <li><a class="dz-active" href="modulo-reservas.php">Calendario de reservas</a></li>
+                    <li><a class="dz-active" href="sedes-mesas.php">Sedes, mesas y recursos</a></li>
                 </ul>
             </li>
             <li>
