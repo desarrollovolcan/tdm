@@ -4,13 +4,14 @@ Este documento especifica un sistema completo para administrar clubes de tenis d
 
 ## 1. Arquitectura y seguridad
 - **Capas**:
-  - API REST en Slim (JWT + refresh tokens, middleware RBAC, validación con Respect/Validation).
-  - UI web en PHP server-rendered con fetch API para acciones dinámicas; SPA ligero para chat/calendario.
+  - API REST en Slim (JWT + refresh tokens, middleware RBAC, validación con Respect/Validation) más workers en CLI para recordatorios, recálculo de rating y cierres de torneo.
+  - UI web en PHP server-rendered con fetch API para acciones dinámicas; SPA ligero para chat/calendario con notificaciones web push.
   - MySQL como base de datos principal; Redis opcional para caché de sesiones y notificaciones en tiempo real (WebSocket via Ratchet/Pusher-like).
-- **Multi-club**: todos los registros se asocian a `club_id`; el `super_admin` puede crear clubes y gestionar planes de uso del software.
+- **Multi-club**: todos los registros se asocian a `club_id`; el `super_admin` puede crear clubes, gestionar planes de uso del software y ver métricas consolidadas por club.
 - **Seguridad**: HTTPS, JWT firmado, hashing de contraseñas con Argon2id, rate limiting, auditoría en tabla `activity_logs`. Cumplimiento GDPR: consentimiento, anonimización lógica, exportación y borrado de datos personales.
 - **Backups y resiliencia**: snapshots diarios de MySQL, exportaciones CSV/Excel desde UI para entidades clave, y rotación de logs de aplicación.
 - **Observabilidad**: métricas de rendimiento (apdex, latencias) y alertas cuando fallan recordatorios de pago o envío de notificaciones.
+- **Integraciones previstas**: conectores opcionales para pasarelas (MercadoPago/Stripe), correo (SMTP/API), WhatsApp Business y S3/MinIO para adjuntos.
 
 ## 2. Roles y permisos
 Roles mínimos: `super_admin`, `club_admin`, `coach`, `athlete`, `finance`, `guardian`, `guest`.
@@ -24,6 +25,8 @@ Roles mínimos: `super_admin`, `club_admin`, `coach`, `athlete`, `finance`, `gua
   - `athlete`: reservar mesas/coach, ver panel personal, responder chat, registrar tests auto-reporte si el club lo permite.
   - `guardian`: acceso de solo lectura a asistencia/pagos/rendimiento básico del menor y chat con entrenador.
   - `guest`: pre-registro y solicitud de pruebas; acceso limitado a reservas o pagos de prueba según políticas.
+- **Escenarios multi-club**: un mismo usuario puede tener roles distintos por club (ej. coach en Club A y athlete en Club B); el middleware RBAC recibe `club_id` en el JWT y valida pertenencia + rol.
+- **Delegación**: el `club_admin` puede delegar permisos específicos (p.ej., `attendance.mark` o `booking.manage`) a asistentes temporales sin otorgar rol completo.
 
 ## 3. Modelo de datos (tablas principales)
 - **Identidad y pertenencia**
@@ -33,12 +36,14 @@ Roles mínimos: `super_admin`, `club_admin`, `coach`, `athlete`, `finance`, `gua
   - `user_roles(id, club_id, user_id, role)`
   - `guardians(id, user_id, athlete_id, relationship, can_pay, can_view_stats)`
   - `activity_logs(id, user_id, club_id, action, entity, entity_id, payload, ip, created_at)`
+  - `documents(id, user_id, club_id, type, url, metadata, created_at)` para fichas médicas, consentimientos y certificados.
 
 - **Infraestructura de sedes**
   - `locations(id, club_id, name, address, city, type, contact, status)`
   - `tables(id, location_id, code, surface, status, notes)`
   - `rooms(id, location_id, name, type, capacity, status)`
   - `table_availability(id, table_id, start_at, end_at, is_blocked, reason)`
+  - `equipment(id, club_id, name, type, status, notes, assigned_to_location)` para gestión de robopongs, cámaras de videoanálisis, etc.
 
 - **Entrenamientos**
   - `training_plans(id, club_id, title, type, description, focus, intensity_target, created_by, created_at, template_json)`
@@ -48,6 +53,8 @@ Roles mínimos: `super_admin`, `club_admin`, `coach`, `athlete`, `finance`, `gua
   - `training_exercises(id, session_id, category, sub_type, volume_balls, intensity, focus, notes)`
   - `training_goals(id, session_id, athlete_id, title, target_metric, target_value, due_date, status)`
   - `training_feedback(id, session_id, athlete_id, coach_id, text, attachment_url, created_at)`
+  - `microcycles(id, club_id, name, start_date, end_date, objective)` y `microcycle_sessions(microcycle_id, session_id, day_index)` para planificación semanal.
+  - `attendance_import_jobs(id, session_id, source, status, processed_at, errors_json)` para carga rápida desde CSV u offline.
 
 - **Rendimiento y competencias**
   - `competitions(id, club_id, name, type, format, category, start_date, end_date, location, status)`
@@ -58,6 +65,8 @@ Roles mínimos: `super_admin`, `club_admin`, `coach`, `athlete`, `finance`, `gua
   - `tests(id, club_id, athlete_id, type, date, score, unit, notes)`
   - `targets(id, athlete_id, title, description, type, baseline_value, target_value, start_date, due_date, status, coach_id)`
   - `target_updates(id, target_id, progress_value, note, updated_by, created_at)`
+  - `video_reviews(id, athlete_id, session_id, match_id, coach_id, url, tags, notes, created_at)` para adjuntar análisis de video y feedback.
+  - `elo_history(id, athlete_id, value, calculated_at, reason)` para trazabilidad del rating interno.
 
 - **Planes, membresías y finanzas**
   - `plans(id, club_id, name, type, description, sessions_included, period, price, currency, restrictions, tax_rate)`
@@ -67,6 +76,8 @@ Roles mínimos: `super_admin`, `club_admin`, `coach`, `athlete`, `finance`, `gua
   - `invoice_items(id, invoice_id, item_type, item_id, description, qty, unit_price, tax_rate)`
   - `payments(id, invoice_id, method, amount, currency, paid_at, reference, status, processor)`
   - `reminders(id, invoice_id, channel, schedule_at, sent_at, status)`
+  - `penalties(id, club_id, user_id, booking_id, amount, currency, reason, created_at)` conectada a cancelaciones tardías.
+  - `discounts(id, club_id, code, type, value, valid_from, valid_to, applies_to_plan, usage_limit)`.
 
 - **Comunicación y notificaciones**
   - `conversations(id, club_id, title, scope, created_by)`
@@ -75,19 +86,21 @@ Roles mínimos: `super_admin`, `club_admin`, `coach`, `athlete`, `finance`, `gua
   - `notifications(id, user_id, type, title, body, payload, channel, sent_at, read_at)`
   - `message_reactions(id, message_id, user_id, emoji, created_at)`
   - `message_reads(id, message_id, user_id, read_at)`
+  - `broadcasts(id, club_id, title, body, target_segment, sent_by, sent_at)` para anuncios masivos por categoría o grupo.
 
 - **Reservas**
   - `bookings(id, club_id, user_id, coach_id, table_id, room_id, start_at, end_at, purpose, status, cancellation_policy)`
   - `booking_rules(id, club_id, max_active_per_user, cancel_min_hours, penalties)`
+  - `booking_waitlist(id, booking_id, user_id, status)` para listas de espera en horarios populares.
 
 ## 4. API REST principal (ejemplos)
 - **Auth**: `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `POST /auth/forgot`, `POST /auth/reset`.
 - **Club y sedes**: `GET/POST/PUT /clubs`, `GET/POST/PUT/DELETE /clubs/{id}/locations`, `/locations/{id}/tables`, `/availability`.
 - **Usuarios y roles**: `GET/POST/PUT /clubs/{id}/members`, `POST /clubs/{id}/members/{userId}/roles`, `DELETE /memberships/{id}`.
 - **Entrenamientos**: `POST /trainings`, `GET /trainings?club_id&coach_id&date`, `PUT /trainings/{id}`, `POST /trainings/{id}/participants`, `POST /trainings/{id}/attendance`, `POST /trainings/{id}/exercises`, `POST /trainings/{id}/goals`, `POST /trainings/{id}/feedback`.
-- **Rendimiento**: `POST /matches`, `POST /matches/{id}/sets`, `POST /matches/{id}/stats`, `GET /athletes/{id}/performance?from&to`, `POST /tests`, `POST /athletes/{id}/targets`, `POST /targets/{id}/updates`.
+- **Rendimiento**: `POST /matches`, `POST /matches/{id}/sets`, `POST /matches/{id}/stats`, `GET /athletes/{id}/performance?from&to`, `POST /tests`, `POST /athletes/{id}/targets`, `POST /targets/{id}/updates`, `POST /videos`, `GET /athletes/{id}/elo-history`.
 - **Competencias**: `POST /competitions`, `POST /competitions/{id}/generate-bracket`, `POST /competitions/{id}/matches/{matchId}/result`, `GET /competitions/{id}/table`, `GET /competitions/{id}/schedule`.
-- **Planes y cobranzas**: `POST /plans`, `POST /memberships`, `POST /invoices`, `POST /invoices/{id}/payments`, `GET /reports/revenue?from&to`, `GET /reports/debtors`, `POST /reminders/{id}/send`, `POST /payments/webhook` (pasarela externa).
+- **Planes y cobranzas**: `POST /plans`, `POST /memberships`, `POST /invoices`, `POST /invoices/{id}/payments`, `GET /reports/revenue?from&to`, `GET /reports/debtors`, `POST /reminders/{id}/send`, `POST /payments/webhook` (pasarela externa), `POST /discounts/apply`.
 - **Chat y notificaciones**: `POST /conversations`, `POST /conversations/{id}/messages`, `GET /conversations?scope`, `POST /notifications/test`, `PUT /notifications/{id}/read`.
 - **Reservas**: `POST /bookings`, `GET /bookings?user_id&date`, `PUT /bookings/{id}/cancel`, `GET /booking-rules/{clubId}`.
 - **Ejemplo payload creación de entrenamiento**:
@@ -121,6 +134,9 @@ Roles mínimos: `super_admin`, `club_admin`, `coach`, `athlete`, `finance`, `gua
 - **Reservas**: reglas por club; evita solapamientos; penalizaciones por cancelación tardía se reflejan en facturación o en estado del usuario.
 - **Objetivos y metas**: los `targets` se vinculan a deportistas; coaches pueden actualizar progreso después de entrenos/tests; se muestran en panel del deportista y del entrenador.
 - **Auditoría**: toda operación crítica (`payment.received`, `match.recorded`, `booking.cancelled`) se escribe en `activity_logs` con IP/usuario para trazabilidad.
+- **Retención y status**: si un deportista acumula facturas vencidas, se marca `club_memberships.state = suspended` y se bloquean reservas hasta regularizar.
+- **Importación**: permitir subir CSV de deportistas/guardians con validación previa; registrar errores en `attendance_import_jobs` o jobs similares.
+- **GDPR**: anonimización lógica mediante reemplazo de datos personales, manteniendo registros de pagos y asistencia para auditoría.
 
 ## 6. Interfaces de usuario
 ### 6.1 Panel del Deportista
@@ -132,6 +148,7 @@ Roles mínimos: `super_admin`, `club_admin`, `coach`, `athlete`, `finance`, `gua
 - **Comunicación**: chat con entrenadores/apoderados, notificaciones, envío de videos/imágenes.
 - **Objetivos**: tablero de metas técnicas/tácticas/físicas con progreso y comentarios del coach.
 - **Autogestión**: solicitudes de cambio de horario, descarga de datos personales (GDPR) y botón de anonimización si procede.
+- **Indicadores específicos**: tarjeta de carga semanal (volumen de bolas, minutos entrenados), mapa de calor de zonas objetivo (profundidad y ubicación), comparativa saque/recepción por mes.
 
 ### 6.2 Panel del Entrenador
 - **Dashboard**: grupos asignados, lista de deportistas, próximos entrenamientos y partidos relevantes, alertas de pagos pendientes que afecten asistencia.
@@ -139,6 +156,8 @@ Roles mínimos: `super_admin`, `club_admin`, `coach`, `athlete`, `finance`, `gua
 - **Seguimiento**: ingreso rápido de estadísticas post-partido, carga de tests, vista 360° del deportista (historial, fortalezas, debilidades, objetivos, volumen/intensidad).
 - **Comunicación**: chat 1:1 y grupal por categoría o grupo; feedback vinculado a sesiones; envío de adjuntos.
 - **Herramientas móviles**: modo offline para tomar asistencia y sincronizar luego; botones grandes para uso en cancha.
+- **Análisis técnico**: checklist de golpes (drive, loop, flick, topspin vs backspin/topspin) con escalas 1–10 y registro de videos etiquetados. Reportes por grupo y por sesión con intensidad promedio.
+- **Carga de trabajo**: panel de microciclos con distribución de foco (técnico/táctico/físico/mental) y alertas por exceso de intensidad semanal.
 
 ### 6.3 Panel del Administrador / Finanzas
 - **KPIs**: deportistas activos, ingresos por mes, tasa media de asistencia, retención, uso de mesas/sedes.
@@ -146,6 +165,8 @@ Roles mínimos: `super_admin`, `club_admin`, `coach`, `athlete`, `finance`, `gua
 - **Reportes**: listado por categoría/plan/estado, ranking interno, productividad de entrenadores (sesiones, feedback), ingresos por plan/entrenador, deudores.
 - **Cobranzas**: creación de órdenes, aplicación de pagos, conciliación, recordatorios automáticos, configuración de pasarelas.
 - **Cumplimiento**: vista de logs de actividad, trazabilidad de pagos y exportación de datos para auditorías.
+- **Finanzas avanzadas**: cuadro de aging de cuentas por cobrar, proyección de ingresos por renovaciones, conciliación de pagos con webhooks y reversos manuales.
+- **Operación diaria**: tablero de reservas y ocupación de mesas en tiempo real, con alertas por solapamientos o bloqueos programados.
 
 ### 6.4 Módulo de Chat y Notificaciones
 - UI tipo bandeja: lista de conversaciones, mensajes en tiempo real, búsqueda por nombre/categoría/grupo, badges de nuevos mensajes, mutear conversación, adjuntos.

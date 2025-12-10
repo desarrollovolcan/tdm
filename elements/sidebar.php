@@ -9,54 +9,96 @@
                 </a>
             </li>
             <li>
-                <a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
-                    <i class="flaticon-event"></i>
-                    <span class="nav-text">Campeonatos</span>
+                <a href="administracion-club.php" class="ai-icon" aria-expanded="false">
+                    <i class="flaticon-settings"></i>
+                    <span class="nav-text">Administración del club</span>
                 </a>
-                <ul aria-expanded="false" class="left">
-                    <li class="nav-text-icon-toggle">Campeonatos</li>
-                    <li><a class="dz-active" href="campeonatos-calendario.php">Calendario y torneos</a></li>
-                    <li><a class="dz-active" href="campeonatos-inscripciones.php">Inscripciones</a></li>
-                    <li><a class="dz-active" href="campeonatos-cuadros.php">Cuadros y llaves</a></li>
-                    <li><a class="dz-active" href="programacion-partidos.php">Programación de partidos</a></li>
-                </ul>
             </li>
             <li>
                 <a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
                     <i class="flaticon-user"></i>
-                    <span class="nav-text">Jugadores</span>
+                    <span class="nav-text">Deportistas</span>
                 </a>
                 <ul aria-expanded="false" class="left">
-                    <li class="nav-text-icon-toggle">Jugadores</li>
-                    <li><a class="dz-active" href="jugadores.php">Listado de jugadores</a></li>
+                    <li class="nav-text-icon-toggle">Deportistas</li>
+                    <li><a class="dz-active" href="modulo-deportistas.php">Panel del deportista</a></li>
+                    <li><a class="dz-active" href="jugadores.php">Fichas y listado</a></li>
                     <li><a class="dz-active" href="ranking.php">Ranking y categorías</a></li>
                     <li><a class="dz-active" href="historial-jugadores.php">Historial de participación</a></li>
                 </ul>
             </li>
             <li>
                 <a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
-                    <i class="flaticon-handshake"></i>
-                    <span class="nav-text">Clubes y Entrenamientos</span>
+                    <i class="flaticon-381-user-4"></i>
+                    <span class="nav-text">Entrenadores</span>
                 </a>
                 <ul aria-expanded="false" class="left">
-                    <li class="nav-text-icon-toggle">Clubes y Entrenamientos</li>
-                    <li><a class="dz-active" href="clubes.php">Clubes</a></li>
-                    <li><a class="dz-active" href="socios.php">Integrantes / Socios</a></li>
-                    <li><a class="dz-active" href="entrenamientos.php">Entrenamientos</a></li>
-                    <li><a class="dz-active" href="planes-entrenamiento.php">Planes de Entrenamiento</a></li>
-                    <li><a class="dz-active" href="equipos.php">Equipos y parejas</a></li>
+                    <li class="nav-text-icon-toggle">Entrenadores</li>
+                    <li><a class="dz-active" href="modulo-entrenadores.php">Panel del entrenador</a></li>
+                    <li><a class="dz-active" href="equipos.php">Grupos y equipos</a></li>
                 </ul>
             </li>
             <li>
                 <a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
-                    <i class="flaticon-trophy"></i>
-                    <span class="nav-text">Partidos y resultados</span>
+                    <i class="flaticon-handshake"></i>
+                    <span class="nav-text">Entrenamientos</span>
                 </a>
                 <ul aria-expanded="false" class="left">
-                    <li class="nav-text-icon-toggle">Partidos y resultados</li>
+                    <li class="nav-text-icon-toggle">Entrenamientos</li>
+                    <li><a class="dz-active" href="modulo-entrenamientos.php">Planificación y asistencia</a></li>
+                    <li><a class="dz-active" href="entrenamientos.php">Sesiones programadas</a></li>
+                    <li><a class="dz-active" href="planes-entrenamiento.php">Planes y microciclos</a></li>
+                </ul>
+            </li>
+            <li>
+                <a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
+                    <i class="flaticon-event"></i>
+                    <span class="nav-text">Competencias y partidos</span>
+                </a>
+                <ul aria-expanded="false" class="left">
+                    <li class="nav-text-icon-toggle">Competencias</li>
+                    <li><a class="dz-active" href="modulo-competencias.php">Torneos y estadísticas</a></li>
+                    <li><a class="dz-active" href="campeonatos-calendario.php">Calendario y torneos</a></li>
+                    <li><a class="dz-active" href="programacion-partidos.php">Programación de partidos</a></li>
                     <li><a class="dz-active" href="partidos.php">Gestión de partidos</a></li>
                     <li><a class="dz-active" href="resultados.php">Resultados y marcadores</a></li>
                     <li><a class="dz-active" href="arbitros.php">Árbitros y mesas</a></li>
+                </ul>
+            </li>
+            <li>
+                <a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
+                    <i class="flaticon-381-dollar"></i>
+                    <span class="nav-text">Planes y cobranzas</span>
+                </a>
+                <ul aria-expanded="false" class="left">
+                    <li class="nav-text-icon-toggle">Planes y cobranzas</li>
+                    <li><a class="dz-active" href="modulo-finanzas.php">Planes, membresías y pagos</a></li>
+                    <li><a class="dz-active" href="create-invoices.php">Crear facturas</a></li>
+                    <li><a class="dz-active" href="invoices.php">Listado de facturas</a></li>
+                    <li><a class="dz-active" href="wallet.php">Pagos y métodos</a></li>
+                </ul>
+            </li>
+            <li>
+                <a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
+                    <i class="flaticon-chat-3"></i>
+                    <span class="nav-text">Comunicación y chat</span>
+                </a>
+                <ul aria-expanded="false" class="left">
+                    <li class="nav-text-icon-toggle">Comunicación</li>
+                    <li><a class="dz-active" href="modulo-comunicaciones.php">Mensajería y notificaciones</a></li>
+                    <li><a class="dz-active" href="chat-home.php">Chat en vivo</a></li>
+                    <li><a class="dz-active" href="email-inbox.php">Notificaciones por correo</a></li>
+                </ul>
+            </li>
+            <li>
+                <a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
+                    <i class="flaticon-381-calendar-1"></i>
+                    <span class="nav-text">Reservas y recursos</span>
+                </a>
+                <ul aria-expanded="false" class="left">
+                    <li class="nav-text-icon-toggle">Reservas</li>
+                    <li><a class="dz-active" href="modulo-reservas.php">Calendario de reservas</a></li>
+                    <li><a class="dz-active" href="sedes-mesas.php">Sedes, mesas y recursos</a></li>
                 </ul>
             </li>
             <li>
@@ -72,14 +114,14 @@
             </li>
             <li>
                 <a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
-                    <i class="flaticon-settings"></i>
-                    <span class="nav-text">Administración</span>
+                    <i class="flaticon-381-settings-2"></i>
+                    <span class="nav-text">Configuración</span>
                 </a>
                 <ul aria-expanded="false" class="left">
-                    <li class="nav-text-icon-toggle">Administración</li>
+                    <li class="nav-text-icon-toggle">Configuración</li>
                     <li><a class="dz-active" href="usuarios.php">Usuarios y roles</a></li>
                     <li><a class="dz-active" href="configuracion.php">Configuración de campeonato</a></li>
-                    <li><a class="dz-active" href="sedes-mesas.php">Sedes, mesas y recursos</a></li>
+                    <li><a class="dz-active" href="clubes.php">Clubes</a></li>
                 </ul>
             </li>
         </ul>
