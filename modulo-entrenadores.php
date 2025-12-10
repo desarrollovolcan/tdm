@@ -50,6 +50,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $successMessage = flash('entrenador_success');
 $errorMessage = flash('entrenador_error');
+
+function collect_unique_values(array $source, string $key): array
+{
+    $values = array_map(fn($registro) => trim($registro[$key] ?? ''), $source);
+    $values = array_values(array_filter(array_unique($values), fn($value) => $value !== ''));
+    sort($values, SORT_NATURAL | SORT_FLAG_CASE);
+
+    return $values;
+}
+
+$especialidadesGuardadas = collect_unique_values($registros, 'especialidad');
+$certificacionesGuardadas = collect_unique_values($registros, 'certificacion');
+$disponibilidadesGuardadas = collect_unique_values($registros, 'disponibilidad');
+$gruposGuardados = collect_unique_values($registros, 'grupos');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -91,6 +105,7 @@ $errorMessage = flash('entrenador_error');
                                         <div class="card">
                                                 <div class="card-header">
                                                         <h4 class="card-title mb-0">Registrar entrenador</h4>
+                                                        <p class="mb-0 text-muted">Usa los valores existentes para evitar escribir varias veces la misma información.</p>
                                                 </div>
                                                 <div class="card-body">
                                                         <form method="post" class="row g-3">
@@ -100,19 +115,39 @@ $errorMessage = flash('entrenador_error');
                                                                 </div>
                                                                 <div class="col-md-6">
                                                                         <label class="form-label">Especialidad</label>
-                                                                        <input type="text" name="especialidad" class="form-control" placeholder="Niños, alto rendimiento, físico">
+                                                                        <input type="text" name="especialidad" class="form-control" placeholder="Niños, alto rendimiento, físico" list="especialidad-sugerida">
+                                                                        <datalist id="especialidad-sugerida">
+                                                                                <?php foreach ($especialidadesGuardadas as $valor): ?>
+                                                                                        <option value="<?php echo htmlspecialchars($valor); ?>"></option>
+                                                                                <?php endforeach; ?>
+                                                                        </datalist>
                                                                 </div>
                                                                 <div class="col-md-6">
                                                                         <label class="form-label">Certificación</label>
-                                                                        <input type="text" name="certificacion" class="form-control" placeholder="ITTF nivel 1, etc.">
+                                                                        <input type="text" name="certificacion" class="form-control" placeholder="ITTF nivel 1, etc." list="certificacion-sugerida">
+                                                                        <datalist id="certificacion-sugerida">
+                                                                                <?php foreach ($certificacionesGuardadas as $valor): ?>
+                                                                                        <option value="<?php echo htmlspecialchars($valor); ?>"></option>
+                                                                                <?php endforeach; ?>
+                                                                        </datalist>
                                                                 </div>
                                                                 <div class="col-md-6">
                                                                         <label class="form-label">Disponibilidad</label>
-                                                                        <input type="text" name="disponibilidad" class="form-control" placeholder="Lunes a viernes, 9-18h">
+                                                                        <input type="text" name="disponibilidad" class="form-control" placeholder="Lunes a viernes, 9-18h" list="disponibilidad-sugerida">
+                                                                        <datalist id="disponibilidad-sugerida">
+                                                                                <?php foreach ($disponibilidadesGuardadas as $valor): ?>
+                                                                                        <option value="<?php echo htmlspecialchars($valor); ?>"></option>
+                                                                                <?php endforeach; ?>
+                                                                        </datalist>
                                                                 </div>
                                                                 <div class="col-md-6">
                                                                         <label class="form-label">Grupos asignados</label>
-                                                                        <input type="text" name="grupos" class="form-control" placeholder="Sub-13 A, Adultos B">
+                                                                        <input type="text" name="grupos" class="form-control" placeholder="Sub-13 A, Adultos B" list="grupos-sugeridos">
+                                                                        <datalist id="grupos-sugeridos">
+                                                                                <?php foreach ($gruposGuardados as $valor): ?>
+                                                                                        <option value="<?php echo htmlspecialchars($valor); ?>"></option>
+                                                                                <?php endforeach; ?>
+                                                                        </datalist>
                                                                 </div>
                                                                 <div class="col-12">
                                                                         <button type="submit" class="btn btn-primary">Guardar entrenador</button>
