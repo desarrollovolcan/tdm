@@ -6,8 +6,14 @@ require_once __DIR__ . '/helpers.php';
 const CLUB_STORE = 'clubes.json';
 
 $clubes = load_json(CLUB_STORE);
+$clubEditando = null;
+
+if (($_GET['action'] ?? '') === 'editar' && isset($_GET['id'])) {
+    $clubEditando = find_by_id($clubes, $_GET['id']);
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id = trim($_POST['id'] ?? '');
     $nombre = trim($_POST['nombre'] ?? '');
     $ciudad = trim($_POST['ciudad'] ?? '');
     $contacto = trim($_POST['contacto'] ?? '');
@@ -21,19 +27,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $clubes[] = [
-        'id' => uniqid('club_', true),
-        'nombre' => $nombre,
-        'ciudad' => $ciudad,
-        'contacto' => $contacto,
-        'correo' => $correo,
-        'telefono' => $telefono,
-        'afiliacion' => $afiliacion,
-        'created_at' => date(DATE_ATOM),
-    ];
+    if ($id !== '') {
+        $clubes = array_map(function ($club) use ($id, $nombre, $ciudad, $contacto, $correo, $telefono, $afiliacion) {
+            if (($club['id'] ?? '') !== $id) {
+                return $club;
+            }
+
+            return array_merge($club, [
+                'nombre' => $nombre,
+                'ciudad' => $ciudad,
+                'contacto' => $contacto,
+                'correo' => $correo,
+                'telefono' => $telefono,
+                'afiliacion' => $afiliacion,
+                'updated_at' => date(DATE_ATOM),
+            ]);
+        }, $clubes);
+    } else {
+        $clubes[] = [
+            'id' => uniqid('club_', true),
+            'nombre' => $nombre,
+            'ciudad' => $ciudad,
+            'contacto' => $contacto,
+            'correo' => $correo,
+            'telefono' => $telefono,
+            'afiliacion' => $afiliacion,
+            'created_at' => date(DATE_ATOM),
+        ];
+    }
 
     save_json(CLUB_STORE, $clubes);
-    $_SESSION['club_success'] = 'Club registrado correctamente.';
+    $_SESSION['club_success'] = $id !== '' ? 'Club actualizado correctamente.' : 'Club registrado correctamente.';
     header('Location: clubes.php');
     exit;
 }
@@ -143,32 +167,36 @@ if (($_GET['action'] ?? '') === 'eliminar' && isset($_GET['id'])) {
                                 <?php endif; ?>
 
                                 <form method="post" class="row g-3">
+                                    <input type="hidden" name="id" value="<?php echo htmlspecialchars($clubEditando['id'] ?? ''); ?>">
                                     <div class="col-md-6">
                                         <label class="form-label">Nombre del club</label>
-                                        <input type="text" name="nombre" class="form-control" placeholder="Club / Asociación" required>
+                                        <input type="text" name="nombre" class="form-control" placeholder="Club / Asociación" required value="<?php echo htmlspecialchars($clubEditando['nombre'] ?? ''); ?>">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Ciudad</label>
-                                        <input type="text" name="ciudad" class="form-control" placeholder="Ciudad" required>
+                                        <input type="text" name="ciudad" class="form-control" placeholder="Ciudad" required value="<?php echo htmlspecialchars($clubEditando['ciudad'] ?? ''); ?>">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Contacto principal</label>
-                                        <input type="text" name="contacto" class="form-control" placeholder="Nombre del responsable">
+                                        <input type="text" name="contacto" class="form-control" placeholder="Nombre del responsable" value="<?php echo htmlspecialchars($clubEditando['contacto'] ?? ''); ?>">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Correo</label>
-                                        <input type="email" name="correo" class="form-control" placeholder="contacto@club.com">
+                                        <input type="email" name="correo" class="form-control" placeholder="contacto@club.com" value="<?php echo htmlspecialchars($clubEditando['correo'] ?? ''); ?>">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Teléfono</label>
-                                        <input type="text" name="telefono" class="form-control" placeholder="Opcional">
+                                        <input type="text" name="telefono" class="form-control" placeholder="Opcional" value="<?php echo htmlspecialchars($clubEditando['telefono'] ?? ''); ?>">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Afiliación</label>
-                                        <input type="text" name="afiliacion" class="form-control" placeholder="Liga / Federación">
+                                        <input type="text" name="afiliacion" class="form-control" placeholder="Liga / Federación" value="<?php echo htmlspecialchars($clubEditando['afiliacion'] ?? ''); ?>">
                                     </div>
                                     <div class="col-12 text-end">
-                                        <button type="submit" class="btn btn-primary">Guardar club</button>
+                                        <button type="submit" class="btn btn-primary"><?php echo $clubEditando ? 'Actualizar club' : 'Guardar club'; ?></button>
+                                        <?php if ($clubEditando): ?>
+                                            <a href="clubes.php" class="btn btn-outline-secondary">Cancelar edición</a>
+                                        <?php endif; ?>
                                     </div>
                                 </form>
                             </div>
@@ -215,7 +243,10 @@ if (($_GET['action'] ?? '') === 'eliminar' && isset($_GET['id'])) {
                                                     </td>
                                                     <td><?php echo htmlspecialchars($club['afiliacion'] ?? ''); ?></td>
                                                     <td class="text-end">
-                                                        <a href="clubes.php?action=eliminar&id=<?php echo urlencode($club['id']); ?>" class="btn btn-outline-danger btn-xs" onclick="return confirm('¿Eliminar club?');">Eliminar</a>
+                                                        <div class="btn-group">
+                                                            <a href="clubes.php?action=editar&id=<?php echo urlencode($club['id']); ?>" class="btn btn-outline-primary btn-xs">Editar</a>
+                                                            <a href="clubes.php?action=eliminar&id=<?php echo urlencode($club['id']); ?>" class="btn btn-outline-danger btn-xs" onclick="return confirm('¿Eliminar club?');">Eliminar</a>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>

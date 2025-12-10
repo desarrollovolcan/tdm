@@ -8,8 +8,14 @@ const CLUB_STORE = 'clubes.json';
 
 $jugadores = load_json(PLAYER_STORE);
 $clubes = load_json(CLUB_STORE);
+$jugadorEditando = null;
+
+if (($_GET['action'] ?? '') === 'editar' && isset($_GET['id'])) {
+    $jugadorEditando = find_by_id($jugadores, $_GET['id']);
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id = trim($_POST['id'] ?? '');
     $nombre = trim($_POST['nombre'] ?? '');
     $apellido = trim($_POST['apellido'] ?? '');
     $correo = trim($_POST['correo'] ?? '');
@@ -26,19 +32,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $jugadores[] = [
-        'id' => uniqid('jug_', true),
-        'nombre' => $nombre,
-        'apellido' => $apellido,
-        'correo' => $correo,
-        'telefono' => $telefono,
-        'nacimiento' => $nacimiento,
-        'club' => $club,
-        'categoria' => $categoria,
-        'ranking' => $ranking,
-        'mano' => $mano,
-        'created_at' => date(DATE_ATOM),
-    ];
+    if ($id !== '') {
+        $jugadores = array_map(function ($jugador) use ($id, $nombre, $apellido, $correo, $telefono, $nacimiento, $club, $categoria, $ranking, $mano) {
+            if (($jugador['id'] ?? '') !== $id) {
+                return $jugador;
+            }
+
+            return array_merge($jugador, [
+                'nombre' => $nombre,
+                'apellido' => $apellido,
+                'correo' => $correo,
+                'telefono' => $telefono,
+                'nacimiento' => $nacimiento,
+                'club' => $club,
+                'categoria' => $categoria,
+                'ranking' => $ranking,
+                'mano' => $mano,
+                'updated_at' => date(DATE_ATOM),
+            ]);
+        }, $jugadores);
+    } else {
+        $jugadores[] = [
+            'id' => uniqid('jug_', true),
+            'nombre' => $nombre,
+            'apellido' => $apellido,
+            'correo' => $correo,
+            'telefono' => $telefono,
+            'nacimiento' => $nacimiento,
+            'club' => $club,
+            'categoria' => $categoria,
+            'ranking' => $ranking,
+            'mano' => $mano,
+            'created_at' => date(DATE_ATOM),
+        ];
+    }
 
     if (!save_json(PLAYER_STORE, $jugadores)) {
         $_SESSION['jugadores_error'] = 'No se pudo guardar el jugador. Verifica permisos de escritura.';
@@ -46,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $_SESSION['jugadores_success'] = 'Jugador registrado correctamente.';
+    $_SESSION['jugadores_success'] = $id !== '' ? 'Jugador actualizado correctamente.' : 'Jugador registrado correctamente.';
     header('Location: jugadores.php');
     exit;
 }
@@ -160,59 +187,65 @@ if (($_GET['action'] ?? '') === 'eliminar' && isset($_GET['id'])) {
                                 <?php endif; ?>
 
                                 <form method="post" class="row g-3">
+                                    <input type="hidden" name="id" value="<?php echo htmlspecialchars($jugadorEditando['id'] ?? ''); ?>">
                                     <div class="col-md-6">
                                         <label class="form-label">Nombre</label>
-                                        <input type="text" name="nombre" class="form-control" placeholder="Nombre" required>
+                                        <input type="text" name="nombre" class="form-control" placeholder="Nombre" required value="<?php echo htmlspecialchars($jugadorEditando['nombre'] ?? ''); ?>">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Apellido</label>
-                                        <input type="text" name="apellido" class="form-control" placeholder="Apellido" required>
+                                        <input type="text" name="apellido" class="form-control" placeholder="Apellido" required value="<?php echo htmlspecialchars($jugadorEditando['apellido'] ?? ''); ?>">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Correo electrónico</label>
-                                        <input type="email" name="correo" class="form-control" placeholder="correo@dominio.com" required>
+                                        <input type="email" name="correo" class="form-control" placeholder="correo@dominio.com" required value="<?php echo htmlspecialchars($jugadorEditando['correo'] ?? ''); ?>">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Teléfono</label>
-                                        <input type="text" name="telefono" class="form-control" placeholder="Opcional">
+                                        <input type="text" name="telefono" class="form-control" placeholder="Opcional" value="<?php echo htmlspecialchars($jugadorEditando['telefono'] ?? ''); ?>">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Fecha de nacimiento</label>
-                                        <input type="date" name="nacimiento" class="form-control">
+                                        <input type="date" name="nacimiento" class="form-control" value="<?php echo htmlspecialchars($jugadorEditando['nacimiento'] ?? ''); ?>">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Club</label>
                                         <select name="club" class="form-control">
                                             <option value="">Sin club</option>
                                             <?php foreach ($clubes as $club): ?>
-                                                <option value="<?php echo htmlspecialchars($club['nombre'] ?? ''); ?>"><?php echo htmlspecialchars($club['nombre'] ?? ''); ?></option>
+                                                <option value="<?php echo htmlspecialchars($club['nombre'] ?? ''); ?>" <?php echo (($jugadorEditando['club'] ?? '') === ($club['nombre'] ?? '')) ? 'selected' : ''; ?>><?php echo htmlspecialchars($club['nombre'] ?? ''); ?></option>
                                             <?php endforeach; ?>
                                         </select>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Categoría</label>
                                         <select name="categoria" class="form-control">
-                                            <option value="">Selecciona</option>
-                                            <option>Infantil</option>
-                                            <option>Juvenil</option>
-                                            <option>Adulto</option>
-                                            <option>Senior</option>
+                                            <?php $catActual = $jugadorEditando['categoria'] ?? ''; ?>
+                                            <option value="" <?php echo $catActual === '' ? 'selected' : ''; ?>>Selecciona</option>
+                                            <option <?php echo $catActual === 'Infantil' ? 'selected' : ''; ?>>Infantil</option>
+                                            <option <?php echo $catActual === 'Juvenil' ? 'selected' : ''; ?>>Juvenil</option>
+                                            <option <?php echo $catActual === 'Adulto' ? 'selected' : ''; ?>>Adulto</option>
+                                            <option <?php echo $catActual === 'Senior' ? 'selected' : ''; ?>>Senior</option>
                                         </select>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Ranking / NIV</label>
-                                        <input type="text" name="ranking" class="form-control" placeholder="Ej. 1240">
+                                        <input type="text" name="ranking" class="form-control" placeholder="Ej. 1240" value="<?php echo htmlspecialchars($jugadorEditando['ranking'] ?? ''); ?>">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Mano hábil</label>
                                         <select name="mano" class="form-control">
-                                            <option value="">Selecciona</option>
-                                            <option>Derecha</option>
-                                            <option>Izquierda</option>
+                                            <?php $manoActual = $jugadorEditando['mano'] ?? ''; ?>
+                                            <option value="" <?php echo $manoActual === '' ? 'selected' : ''; ?>>Selecciona</option>
+                                            <option <?php echo $manoActual === 'Derecha' ? 'selected' : ''; ?>>Derecha</option>
+                                            <option <?php echo $manoActual === 'Izquierda' ? 'selected' : ''; ?>>Izquierda</option>
                                         </select>
                                     </div>
                                     <div class="col-12 text-end">
-                                        <button type="submit" class="btn btn-primary">Guardar jugador</button>
+                                        <button type="submit" class="btn btn-primary"><?php echo $jugadorEditando ? 'Actualizar jugador' : 'Guardar jugador'; ?></button>
+                                        <?php if ($jugadorEditando): ?>
+                                            <a href="jugadores.php" class="btn btn-outline-secondary">Limpiar edición</a>
+                                        <?php endif; ?>
                                     </div>
                                 </form>
                             </div>
@@ -270,7 +303,10 @@ if (($_GET['action'] ?? '') === 'eliminar' && isset($_GET['id'])) {
                                                         </div>
                                                     </td>
                                                     <td class="text-end">
-                                                        <a href="jugadores.php?action=eliminar&id=<?php echo urlencode($jugador['id']); ?>" class="btn btn-outline-danger btn-xs" onclick="return confirm('¿Eliminar jugador?');">Eliminar</a>
+                                                        <div class="btn-group">
+                                                            <a href="jugadores.php?action=editar&id=<?php echo urlencode($jugador['id']); ?>" class="btn btn-outline-primary btn-xs">Editar</a>
+                                                            <a href="jugadores.php?action=eliminar&id=<?php echo urlencode($jugador['id']); ?>" class="btn btn-outline-danger btn-xs" onclick="return confirm('¿Eliminar jugador?');">Eliminar</a>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
