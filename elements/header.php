@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/../db.php';
+$dbStatus = db_status();
+?>
 <div class="header">
 	<div class="header-content">
 		<nav class="navbar navbar-expand">
@@ -18,7 +22,14 @@
 						</div>
 					</div>
 				</div>
-				<ul class="navbar-nav header-right">
+                                <?php $sessionUser = $_SESSION['user'] ?? null; ?>
+                                <ul class="navbar-nav header-right">
+                                        <li class="nav-item d-flex align-items-center me-3">
+                                                <span class="badge <?php echo $dbStatus['connected'] ? 'bg-success' : 'bg-danger'; ?>">
+                                                        BD: <?php echo $dbStatus['connected'] ? 'Conectada' : 'Sin conexión'; ?>
+                                                </span>
+                                                <small class="ms-2 text-muted">config: db.php</small>
+                                        </li>
 					<li class="nav-item dropdown notification_dropdown">
 						<a class="nav-link bell dz-theme-mode p-0" href="javascript:void(0);">
 							<i id="icon-light" class="flaticon-sun"></i>
@@ -254,8 +265,8 @@
 						<a class="nav-link" href="javascript:void(0);" role="button" data-bs-toggle="dropdown">
 							<img src="assets/images/user.jpg" width="20" alt="">
 							<div class="header-info ms-2 me-3">
-								<span class="fs-13 font-w500 mb-0">Yatin Xarma</span>
-								<small class="fs-12">Super Admin</small>
+								<span class="fs-13 font-w500 mb-0"><?php echo htmlspecialchars($sessionUser['nombre'] ?? 'Usuario'); ?></span>
+								<small class="fs-12"><?php echo htmlspecialchars($sessionUser['rol'] ?? ''); ?></small>
 							</div>
 							<div class="ms-auto me-1">
 								<svg width="12" height="12" viewBox="0 0 12 12" fill="none"
@@ -273,57 +284,32 @@
 									<div class="d-flex align-items-center">
 										<img src="assets/images/user.jpg" class="avatar me-2" alt="">
 										<div>
-											<h6 class="mb-0">Yatin Xarma</h6>
-											<small>Web Designer</small>
+											<h6 class="mb-0"><?php echo htmlspecialchars($sessionUser['nombre'] ?? ''); ?></h6>
+											<small><?php echo htmlspecialchars($sessionUser['email'] ?? ''); ?></small>
 										</div>
 
 									</div>
 									<div class="ms-auto">
-										<a href="edit-profile.php"><i
+										<a href="perfil.php"><i
 												class="flaticon-editing text-primary fs-18"></i></a>
 									</div>
 								</div>
 								<div class="card-body px-0 py-2">
-									<a href="javascript:void(0);" class="dropdown-item ai-icon ">
-										<i class="flaticon-bar-chart fs-18"></i>
-
-										<span class="ms-2">Project Activity</span>
+									<a href="perfil.php" class="dropdown-item ai-icon ">
+										<i class="flaticon-user-2 fs-18"></i>
+										<span class="ms-2">Mi perfil</span>
 									</a>
-									<a href="javascript:void(0);" class="dropdown-item ai-icon ">
-										<i class="flaticon-shopping-cart fs-18"></i>
-										<span class="ms-2">Product Details</span>
-
+									<a href="usuarios.php" class="dropdown-item ai-icon ">
+										<i class="flaticon-settings fs-18"></i>
+										<span class="ms-2">Usuarios</span>
 									</a>
-
-									<a href="javascript:void(0);" class="dropdown-item ai-icon ">
-										<i class="flaticon-puzzle fs-18"></i>
-
-										<span class="ms-2">Account Setting </span>
-									</a>
-									<a href="javascript:void(0);" class="dropdown-item ai-icon ">
-										<i class="flaticon-hard-drive fs-18"></i>
-										<span class="ms-2">File Manager </span>
-									</a>
-									<a href="javascript:void(0);" class="dropdown-item ai-icon ">
-										<div class="d-flex align-items-center justify-content-between">
-											<div class="header-info">
-												<h6 class="mb-0 fs-14">Student Plan Active</h6>
-												<small class="fs-12">284 Days Left</small>
-											</div>
-											<div class="">
-												<span class="badge badge-primary light">Upgrade</span>
-											</div>
-										</div>
-
-
-									</a>
-								</div>
-								<div class="card-footer px-0 py-2">
-
-									<a href="page-login.php" class="dropdown-item ai-icon">
-										<i class="flaticon-logout-1 fs-18 text-danger"></i>
-										<span class="ms-2 text-danger">Logout </span>
-									</a>
+									<form action="auth.php" method="post" class="dropdown-item p-0">
+										<input type="hidden" name="action" value="logout">
+										<button type="submit" class="btn btn-link d-flex align-items-center w-100 text-start">
+											<i class="flaticon-logout fs-18 me-2"></i>
+											<span class="ms-1">Cerrar sesión</span>
+										</button>
+									</form>
 								</div>
 							</div>
 						</div>
