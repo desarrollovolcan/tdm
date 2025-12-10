@@ -7,28 +7,6 @@ const TEAM_STORE = 'equipos.json';
 const PLAYER_STORE = 'jugadores.json';
 const CLUB_STORE = 'clubes.json';
 
-function loadData(string $path): array
-{
-    if (!file_exists($path)) {
-        return [];
-    }
-
-    $json = file_get_contents($path);
-    $decoded = json_decode($json, true);
-
-    return is_array($decoded) ? $decoded : [];
-}
-
-function saveData(string $path, array $payload): void
-{
-    $dir = dirname($path);
-    if (!is_dir($dir)) {
-        mkdir($dir, 0777, true);
-    }
-
-    file_put_contents($path, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-}
-
 $equipos = load_json(TEAM_STORE);
 $jugadores = load_json(PLAYER_STORE);
 $clubes = load_json(CLUB_STORE);
@@ -62,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'created_at' => date(DATE_ATOM),
     ];
 
-    saveData(TEAM_STORE, $equipos);
+    save_json(TEAM_STORE, $equipos);
     $_SESSION['equipos_success'] = 'Equipo registrado correctamente.';
     header('Location: equipos.php');
     exit;
@@ -71,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (($_GET['action'] ?? '') === 'eliminar' && isset($_GET['id'])) {
     $id = $_GET['id'];
     $equipos = array_values(array_filter($equipos, fn($equipo) => ($equipo['id'] ?? '') !== $id));
-    saveData(TEAM_STORE, $equipos);
+    save_json(TEAM_STORE, $equipos);
     $_SESSION['equipos_success'] = 'Equipo eliminado correctamente.';
     header('Location: equipos.php');
     exit;

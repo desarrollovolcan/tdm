@@ -4,7 +4,7 @@ require_once __DIR__ . '/config/dz.php';
 require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/auth.php';
 
-$roles = ['Visitante', 'Arbitro', 'Jugador', 'Administrador'];
+$roles = availableRoles();
 $users = loadUsers();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

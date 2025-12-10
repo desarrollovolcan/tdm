@@ -1,31 +1,42 @@
 <?php
 session_start();
 
-const USER_STORE = __DIR__ . '/database/users.json';
+require_once __DIR__ . '/helpers.php';
+
+const USER_STORE = 'users.json';
 const HASH_OPTIONS = ['cost' => 12];
 
-$roles = ['Visitante', 'Arbitro', 'Jugador', 'Administrador'];
+function availableRoles(): array
+{
+    return ['Visitante', 'Arbitro', 'Jugador', 'Administrador'];
+}
 
 function loadUsers(): array
 {
-    if (!file_exists(USER_STORE)) {
-        return [];
+    $path = storage_path(USER_STORE);
+    $users = [];
+
+    if (file_exists($path)) {
+        $json = file_get_contents($path);
+        $decoded = json_decode($json, true);
+        $users = is_array($decoded) ? $decoded : [];
     }
 
-    $json = file_get_contents(USER_STORE);
-    $decoded = json_decode($json, true);
+    $users = ensureRootUser($users, availableRoles());
+    saveUsers($users);
 
-    return is_array($decoded) ? $decoded : [];
+    return $users;
 }
 
 function saveUsers(array $users): void
 {
-    $dir = dirname(USER_STORE);
+    $path = storage_path(USER_STORE);
+    $dir = dirname($path);
     if (!is_dir($dir)) {
         mkdir($dir, 0777, true);
     }
 
-    file_put_contents(USER_STORE, json_encode($users, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    file_put_contents($path, json_encode($users, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 }
 
 function ensureRootUser(array $users, array $roles): array
@@ -53,6 +64,17 @@ function ensureRootUser(array $users, array $roles): array
     return $users;
 }
 
+function findUserById(array $users, int $id): ?array
+{
+    foreach ($users as $user) {
+        if ((int) ($user['id'] ?? 0) === $id) {
+            return $user;
+        }
+    }
+
+    return null;
+}
+
 function findUserByIdentifier(array $users, string $identifier): ?array
 {
     foreach ($users as $user) {
@@ -70,8 +92,8 @@ if (basename(__FILE__) !== basename($_SERVER['SCRIPT_FILENAME'])) {
 }
 
 $action = $_POST['action'] ?? ($_GET['action'] ?? null);
-$users = ensureRootUser(loadUsers(), $roles);
-saveUsers($users);
+$users = loadUsers();
+$roles = availableRoles();
 
 if ($action === 'logout') {
     session_destroy();
