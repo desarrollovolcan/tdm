@@ -46,6 +46,26 @@ class Championship extends BaseModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function playersForChampionship($championshipId)
+    {
+        $stmt = $this->pdo->prepare('SELECT DISTINCT p.* FROM group_players gp JOIN groups g ON gp.group_id = g.id JOIN players p ON gp.player_id = p.id WHERE g.championship_id = :id ORDER BY COALESCE(p.ranking, 9999), p.name');
+        $stmt->execute(['id' => $championshipId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function groupsWithPlayers($championshipId)
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM groups WHERE championship_id = :id ORDER BY name');
+        $stmt->execute(['id' => $championshipId]);
+        $groups = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($groups as &$group) {
+            $playersStmt = $this->pdo->prepare('SELECT p.* FROM group_players gp JOIN players p ON gp.player_id = p.id WHERE gp.group_id = :group_id ORDER BY COALESCE(p.ranking, 9999), p.name');
+            $playersStmt->execute(['group_id' => $group['id']]);
+            $group['players'] = $playersStmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+        return $groups;
+    }
+
     public function generateGroups($championshipId, $players, $groupSize = 4)
     {
         usort($players, function ($a, $b) {

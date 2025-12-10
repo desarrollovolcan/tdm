@@ -32,6 +32,17 @@ CREATE TABLE championships (
     set_points INT NOT NULL
 );
 
+CREATE TABLE institution_settings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(150) NOT NULL,
+    contact_email VARCHAR(120) NULL,
+    contact_phone VARCHAR(50) NULL,
+    website VARCHAR(150) NULL,
+    address VARCHAR(200) NULL,
+    logo_path VARCHAR(200) NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 CREATE TABLE groups (
     id INT AUTO_INCREMENT PRIMARY KEY,
     championship_id INT NOT NULL,
@@ -67,3 +78,4 @@ CREATE TABLE matches (
 
 INSERT INTO users (name, email, password, role) VALUES ('Administrador', 'admin@tdm.local', '$2y$10$0u2rtV4oy8JbZLQZ/IQrYO7m8l7Xy0eZAi4D5EONosFVJeFt3PcNu', 'admin');
 -- contraseña: admin123
+INSERT INTO institution_settings (name, contact_email, contact_phone) VALUES ('Institución organizadora', 'contacto@example.com', '+56 9 1234 5678');

@@ -28,13 +28,16 @@ Usuario administrador preconfigurado: `admin@tdm.local` / `admin123`.
 - Generación automática de grupos (serpentina) y partidos
 - Registro de resultados con validación ITTF (sets a 11 y diferencia mínima de 2)
 - Dashboard con métricas rápidas de estado
+- Libro oficial exportable a PDF y Excel con logo institucional
+- Mantenedor de institución (datos de contacto y logotipo para vistas y documentos)
 
 ## Estructura
 ```
 app/
-  controllers/
-  models/
-  views/
+ controllers/
+ models/
+ views/
 config/
 public/
+tema/
 ```

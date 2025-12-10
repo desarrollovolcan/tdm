@@ -1,15 +1,20 @@
 <?php
+require_once __DIR__ . '/../models/Institution.php';
+
 class BaseController
 {
     protected $pdo;
+    protected $institution;
 
     public function __construct($pdo)
     {
         $this->pdo = $pdo;
+        $this->institution = (new Institution($this->pdo))->getSettings();
     }
 
     protected function render($view, $params = [])
     {
+        $institution = $this->institution;
         extract($params);
         include __DIR__ . '/../views/layouts/header.php';
         include __DIR__ . '/../views/' . $view . '.php';

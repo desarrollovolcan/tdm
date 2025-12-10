@@ -6,6 +6,7 @@ require_once __DIR__ . '/../app/controllers/DashboardController.php';
 require_once __DIR__ . '/../app/controllers/ChampionshipController.php';
 require_once __DIR__ . '/../app/controllers/PlayerController.php';
 require_once __DIR__ . '/../app/controllers/MatchController.php';
+require_once __DIR__ . '/../app/controllers/InstitutionController.php';
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
@@ -22,6 +23,21 @@ if ($uri === '/') {
 
 if ($method === 'GET' && $uri === '/dashboard') {
     (new DashboardController($pdo))->index();
+    exit;
+}
+
+if ($method === 'GET' && preg_match('#^/championships/(\\d+)$#', $uri, $matches)) {
+    (new ChampionshipController($pdo))->show((int)$matches[1]);
+    exit;
+}
+
+if ($method === 'GET' && preg_match('#^/championships/(\\d+)/book/pdf$#', $uri, $matches)) {
+    (new ChampionshipController($pdo))->exportPdf((int)$matches[1]);
+    exit;
+}
+
+if ($method === 'GET' && preg_match('#^/championships/(\\d+)/book/excel$#', $uri, $matches)) {
+    (new ChampionshipController($pdo))->exportExcel((int)$matches[1]);
     exit;
 }
 
@@ -51,6 +67,12 @@ switch ([$method, $uri]) {
         break;
     case ['POST', '/championships/generate-groups']:
         (new ChampionshipController($pdo))->generateGroups();
+        break;
+    case ['GET', '/institution']:
+        (new InstitutionController($pdo))->edit();
+        break;
+    case ['POST', '/institution']:
+        (new InstitutionController($pdo))->update();
         break;
     case ['GET', '/register']:
         (new PlayerController($pdo))->registerForm();

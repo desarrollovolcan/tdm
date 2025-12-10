@@ -25,11 +25,14 @@
             <td><?php echo htmlspecialchars($c['location']); ?></td>
             <td><span class="badge bg-secondary"><?php echo htmlspecialchars($c['modality']); ?></span></td>
             <td>
-                <form class="d-flex gap-2" method="POST" action="/championships/generate-groups">
-                    <input type="hidden" name="championship_id" value="<?php echo $c['id']; ?>">
-                    <input type="number" name="group_size" value="4" class="form-control form-control-sm" style="width:100px" min="3" max="6">
-                    <button class="btn btn-sm btn-outline-primary">Generar grupos</button>
-                </form>
+                <div class="d-flex gap-2 align-items-center">
+                    <form class="d-flex gap-2" method="POST" action="/championships/generate-groups">
+                        <input type="hidden" name="championship_id" value="<?php echo $c['id']; ?>">
+                        <input type="number" name="group_size" value="4" class="form-control form-control-sm" style="width:90px" min="3" max="6">
+                        <button class="btn btn-sm btn-outline-primary">Grupos</button>
+                    </form>
+                    <a class="btn btn-sm btn-primary" href="/championships/<?php echo $c['id']; ?>">Libro</a>
+                </div>
             </td>
         </tr>
     <?php endforeach; ?>
