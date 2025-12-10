@@ -238,3 +238,39 @@ CREATE TABLE IF NOT EXISTS pagos_inscripciones (
 -- LEFT JOIN sedes s ON p.sede_id = s.id
 -- LEFT JOIN mesas m ON p.mesa_id = m.id
 -- LEFT JOIN arbitros a ON p.arbitro_id = a.id;
+
+-- Nuevos módulos locales
+CREATE TABLE IF NOT EXISTS cuadros_campeonatos (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    campeonato_id INT UNSIGNED NOT NULL,
+    nombre VARCHAR(150) NOT NULL,
+    tipo ENUM('Eliminatoria','Fase de grupos','Mixto') NOT NULL DEFAULT 'Eliminatoria',
+    fase_inicial VARCHAR(50) NULL,
+    detalle TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (campeonato_id) REFERENCES campeonatos(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS programacion_manual (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    campeonato_id INT UNSIGNED NOT NULL,
+    fecha DATE NOT NULL,
+    hora TIME NULL,
+    mesa VARCHAR(50) NULL,
+    fase VARCHAR(80) NULL,
+    detalle TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (campeonato_id) REFERENCES campeonatos(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS resultados_manual (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    partido_id INT UNSIGNED NOT NULL,
+    ganador_jugador_id INT UNSIGNED NULL,
+    marcador VARCHAR(50) NULL,
+    detalle TEXT NULL,
+    fecha DATE NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (partido_id) REFERENCES partidos(id),
+    FOREIGN KEY (ganador_jugador_id) REFERENCES jugadores(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
