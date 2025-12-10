@@ -39,8 +39,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'created_at' => date(DATE_ATOM),
         ];
 
-        saveUsers($users);
-        $_SESSION['usuarios_success'] = 'Usuario creado correctamente.';
+        if (saveUsers($users)) {
+            $_SESSION['usuarios_success'] = 'Usuario creado correctamente.';
+        } else {
+            $_SESSION['usuarios_error'] = 'No fue posible guardar el usuario. Verifica la conexión a la base de datos.';
+        }
     }
 
     header('Location: usuarios.php');
@@ -50,8 +53,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (($_GET['action'] ?? '') === 'eliminar' && isset($_GET['id'])) {
     $id = (int) $_GET['id'];
     $users = array_values(array_filter($users, fn($user) => ($user['id'] ?? 0) !== $id));
-    saveUsers($users);
-    $_SESSION['usuarios_success'] = 'Usuario eliminado correctamente.';
+    if (saveUsers($users)) {
+        $_SESSION['usuarios_success'] = 'Usuario eliminado correctamente.';
+    } else {
+        $_SESSION['usuarios_error'] = 'No se pudo eliminar el usuario en el almacenamiento.';
+    }
     header('Location: usuarios.php');
     exit;
 }

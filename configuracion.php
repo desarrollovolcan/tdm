@@ -21,13 +21,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $config['reglamento'] = trim($_POST['reglamento'] ?? $config['reglamento']);
     $config['mensaje_portal'] = trim($_POST['mensaje_portal'] ?? $config['mensaje_portal']);
 
-    save_json(CONFIG_STORE, $config);
-    $_SESSION['config_success'] = 'Configuración guardada correctamente.';
+    if (save_json(CONFIG_STORE, $config)) {
+        $_SESSION['config_success'] = 'Configuración guardada correctamente.';
+    } else {
+        $_SESSION['config_success'] = null;
+        $_SESSION['config_error'] = 'No se pudo guardar la configuración. Verifica la conexión con la base de datos.';
+    }
     header('Location: configuracion.php');
     exit;
 }
 
 $successMessage = flash('config_success');
+$errorMessage = flash('config_error');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -75,6 +80,12 @@ $successMessage = flash('config_success');
                                                             <?php if ($successMessage): ?>
                                                                 <div class="alert alert-success alert-dismissible fade show">
                                                                     <?php echo htmlspecialchars($successMessage); ?>
+                                                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                                                </div>
+                                                            <?php endif; ?>
+                                                            <?php if ($errorMessage): ?>
+                                                                <div class="alert alert-danger alert-dismissible fade show">
+                                                                    <?php echo htmlspecialchars($errorMessage); ?>
                                                                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                                                                 </div>
                                                             <?php endif; ?>

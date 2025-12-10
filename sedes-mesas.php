@@ -27,8 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'created_at' => date(DATE_ATOM),
         ];
 
-        save_json(SEDES_STORE, $sedes);
-        $_SESSION['sede_success'] = 'Sede registrada correctamente.';
+        if (save_json(SEDES_STORE, $sedes)) {
+            $_SESSION['sede_success'] = 'Sede registrada correctamente.';
+        } else {
+            $_SESSION['sede_error'] = 'No se pudo guardar la sede. Revisa la base de datos o permisos de escritura.';
+        }
     }
 
     header('Location: sedes-mesas.php');
@@ -38,8 +41,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (($_GET['action'] ?? '') === 'eliminar' && isset($_GET['id'])) {
     $id = $_GET['id'];
     $sedes = array_values(array_filter($sedes, fn($sede) => ($sede['id'] ?? '') !== $id));
-    save_json(SEDES_STORE, $sedes);
-    $_SESSION['sede_success'] = 'Sede eliminada correctamente.';
+    if (save_json(SEDES_STORE, $sedes)) {
+        $_SESSION['sede_success'] = 'Sede eliminada correctamente.';
+    } else {
+        $_SESSION['sede_error'] = 'No se pudo eliminar la sede en el almacenamiento.';
+    }
     header('Location: sedes-mesas.php');
     exit;
 }

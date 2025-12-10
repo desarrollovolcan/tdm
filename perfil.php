@@ -65,11 +65,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     unset($stored);
 
-    saveUsers($users);
-    $_SESSION['user']['nombre'] = $nombre;
-    $_SESSION['user']['email'] = $email;
-
-    flash('perfil_success', 'Perfil actualizado correctamente.');
+    if (saveUsers($users)) {
+        $_SESSION['user']['nombre'] = $nombre;
+        $_SESSION['user']['email'] = $email;
+        flash('perfil_success', 'Perfil actualizado correctamente.');
+    } else {
+        flash('perfil_error', 'No pudimos guardar los cambios. Revisa la conexión a la base de datos.');
+    }
     header('Location: perfil.php');
     exit;
 }

@@ -30,8 +30,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'created_at' => date(DATE_ATOM),
         ];
 
-        save_json(ARBITROS_STORE, $arbitros);
-        $_SESSION['arbitro_success'] = 'Registro guardado correctamente.';
+        if (save_json(ARBITROS_STORE, $arbitros)) {
+            $_SESSION['arbitro_success'] = 'Registro guardado correctamente.';
+        } else {
+            $_SESSION['arbitro_error'] = 'No fue posible guardar el registro. Verifica la conexión a la base de datos.';
+        }
     }
 
     header('Location: arbitros.php');
@@ -41,8 +44,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (($_GET['action'] ?? '') === 'eliminar' && isset($_GET['id'])) {
     $id = $_GET['id'];
     $arbitros = array_values(array_filter($arbitros, fn($item) => ($item['id'] ?? '') !== $id));
-    save_json(ARBITROS_STORE, $arbitros);
-    $_SESSION['arbitro_success'] = 'Registro eliminado correctamente.';
+    if (save_json(ARBITROS_STORE, $arbitros)) {
+        $_SESSION['arbitro_success'] = 'Registro eliminado correctamente.';
+    } else {
+        $_SESSION['arbitro_error'] = 'No se pudo eliminar el registro en el almacenamiento.';
+    }
     header('Location: arbitros.php');
     exit;
 }

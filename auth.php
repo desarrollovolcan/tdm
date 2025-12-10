@@ -13,30 +13,16 @@ function availableRoles(): array
 
 function loadUsers(): array
 {
-    $path = storage_path(USER_STORE);
-    $users = [];
-
-    if (file_exists($path)) {
-        $json = file_get_contents($path);
-        $decoded = json_decode($json, true);
-        $users = is_array($decoded) ? $decoded : [];
-    }
-
+    $users = load_json(USER_STORE);
     $users = ensureRootUser($users, availableRoles());
     saveUsers($users);
 
     return $users;
 }
 
-function saveUsers(array $users): void
+function saveUsers(array $users): bool
 {
-    $path = storage_path(USER_STORE);
-    $dir = dirname($path);
-    if (!is_dir($dir)) {
-        mkdir($dir, 0777, true);
-    }
-
-    file_put_contents($path, json_encode($users, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    return save_json(USER_STORE, $users);
 }
 
 function ensureRootUser(array $users, array $roles): array
