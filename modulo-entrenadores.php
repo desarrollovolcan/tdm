@@ -1,5 +1,55 @@
 <?php
-         require_once __DIR__ . '/config/dz.php';
+require_once __DIR__ . '/auth-guard.php';
+require_once __DIR__ . '/config/dz.php';
+require_once __DIR__ . '/helpers.php';
+
+const MODULO_ENTRENADORES_STORE = 'modulo_entrenadores.json';
+
+$registros = load_json(MODULO_ENTRENADORES_STORE);
+
+if (($_GET['action'] ?? '') === 'delete' && isset($_GET['id'])) {
+    $id = $_GET['id'];
+    $registros = array_values(array_filter(
+        $registros,
+        fn($registro) => ($registro['id'] ?? '') !== $id
+    ));
+    save_json(MODULO_ENTRENADORES_STORE, $registros);
+    flash('entrenador_success', 'Registro de entrenador eliminado.');
+    header('Location: modulo-entrenadores.php');
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $nombre = trim($_POST['nombre'] ?? '');
+    $especialidad = trim($_POST['especialidad'] ?? '');
+    $certificacion = trim($_POST['certificacion'] ?? '');
+    $disponibilidad = trim($_POST['disponibilidad'] ?? '');
+    $grupos = trim($_POST['grupos'] ?? '');
+
+    if ($nombre === '') {
+        flash('entrenador_error', 'El nombre del entrenador es obligatorio.');
+        header('Location: modulo-entrenadores.php');
+        exit;
+    }
+
+    $registros[] = [
+        'id' => uniqid('coach_', true),
+        'nombre' => $nombre,
+        'especialidad' => $especialidad,
+        'certificacion' => $certificacion,
+        'disponibilidad' => $disponibilidad,
+        'grupos' => $grupos,
+        'created_at' => date(DATE_ATOM),
+    ];
+
+    save_json(MODULO_ENTRENADORES_STORE, $registros);
+    flash('entrenador_success', 'Entrenador guardado correctamente.');
+    header('Location: modulo-entrenadores.php');
+    exit;
+}
+
+$successMessage = flash('entrenador_success');
+$errorMessage = flash('entrenador_error');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -24,55 +74,88 @@
                                         <li class="breadcrumb-item active">Módulo de entrenadores</li>
                                 </ol>
                         </div>
+                        <?php if ($successMessage): ?>
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                        <?php echo htmlspecialchars($successMessage); ?>
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                        <?php endif; ?>
+                        <?php if ($errorMessage): ?>
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                        <?php echo htmlspecialchars($errorMessage); ?>
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                        <?php endif; ?>
                         <div class="row">
-                                <div class="col-xl-12">
+                                <div class="col-xl-5">
                                         <div class="card">
                                                 <div class="card-header">
-                                                        <h4 class="card-title mb-0">Gestión de entrenadores y staff técnico</h4>
+                                                        <h4 class="card-title mb-0">Registrar entrenador</h4>
                                                 </div>
                                                 <div class="card-body">
-                                                        <p class="mb-4">Organiza perfiles de entrenadores, certificaciones, disponibilidad y comunicación directa con deportistas y apoderados.</p>
-                                                        <div class="row g-4">
-                                                                <div class="col-lg-6">
-                                                                        <div class="h-100 p-4 bg-light rounded">
-                                                                                <h5>Perfiles y certificaciones</h5>
-                                                                                <ul class="mb-0">
-                                                                                        <li>Datos personales, especialidades (niños, alto rendimiento, preparación física).</li>
-                                                                                        <li>Certificaciones y niveles de la federación o programas internos.</li>
-                                                                                        <li>Documentos adjuntos y vencimientos de credenciales.</li>
-                                                                                </ul>
-                                                                        </div>
+                                                        <form method="post" class="row g-3">
+                                                                <div class="col-12">
+                                                                        <label class="form-label">Nombre completo *</label>
+                                                                        <input type="text" name="nombre" class="form-control" required>
                                                                 </div>
-                                                                <div class="col-lg-6">
-                                                                        <div class="h-100 p-4 bg-light rounded">
-                                                                                <h5>Agenda y asignaciones</h5>
-                                                                                <ul class="mb-0">
-                                                                                        <li>Disponibilidad semanal y reglas de carga máxima.</li>
-                                                                                        <li>Asignación a grupos, sesiones individuales y torneos.</li>
-                                                                                        <li>Alertas por solapamientos y gestión de reemplazos.</li>
-                                                                                </ul>
-                                                                        </div>
+                                                                <div class="col-md-6">
+                                                                        <label class="form-label">Especialidad</label>
+                                                                        <input type="text" name="especialidad" class="form-control" placeholder="Niños, alto rendimiento, físico">
                                                                 </div>
-                                                                <div class="col-lg-6">
-                                                                        <div class="h-100 p-4 bg-light rounded">
-                                                                                <h5>Seguimiento y evaluaciones</h5>
-                                                                                <ul class="mb-0">
-                                                                                        <li>Registro de asistencia de entrenadores por sesión.</li>
-                                                                                        <li>Evaluaciones de desempeño y feedback de deportistas.</li>
-                                                                                        <li>Indicadores: mejora de deportistas, volumen de sesiones dirigidas.</li>
-                                                                                </ul>
-                                                                        </div>
+                                                                <div class="col-md-6">
+                                                                        <label class="form-label">Certificación</label>
+                                                                        <input type="text" name="certificacion" class="form-control" placeholder="ITTF nivel 1, etc.">
                                                                 </div>
-                                                                <div class="col-lg-6">
-                                                                        <div class="h-100 p-4 bg-light rounded">
-                                                                                <h5>Comunicaciones</h5>
-                                                                                <ul class="mb-0">
-                                                                                        <li>Chat directo con deportistas y apoderados.</li>
-                                                                                        <li>Envío de anuncios por categoría o grupo.</li>
-                                                                                        <li>Historial de mensajes vinculados a entrenamientos específicos.</li>
-                                                                                </ul>
-                                                                        </div>
+                                                                <div class="col-md-6">
+                                                                        <label class="form-label">Disponibilidad</label>
+                                                                        <input type="text" name="disponibilidad" class="form-control" placeholder="Lunes a viernes, 9-18h">
                                                                 </div>
+                                                                <div class="col-md-6">
+                                                                        <label class="form-label">Grupos asignados</label>
+                                                                        <input type="text" name="grupos" class="form-control" placeholder="Sub-13 A, Adultos B">
+                                                                </div>
+                                                                <div class="col-12">
+                                                                        <button type="submit" class="btn btn-primary">Guardar entrenador</button>
+                                                                </div>
+                                                        </form>
+                                                </div>
+                                        </div>
+                                </div>
+                                <div class="col-xl-7">
+                                        <div class="card">
+                                                <div class="card-header">
+                                                        <h4 class="card-title mb-0">Staff técnico</h4>
+                                                </div>
+                                                <div class="card-body p-0">
+                                                        <div class="table-responsive">
+                                                                <table class="table mb-0">
+                                                                        <thead>
+                                                                                <tr>
+                                                                                        <th>Nombre</th>
+                                                                                        <th>Especialidad</th>
+                                                                                        <th>Certificación</th>
+                                                                                        <th>Disponibilidad</th>
+                                                                                        <th></th>
+                                                                                </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                                <?php if (empty($registros)): ?>
+                                                                                        <tr><td colspan="5" class="text-center py-4">Sin entrenadores cargados.</td></tr>
+                                                                                <?php else: ?>
+                                                                                        <?php foreach ($registros as $registro): ?>
+                                                                                                <tr>
+                                                                                                        <td><?php echo htmlspecialchars($registro['nombre'] ?? ''); ?></td>
+                                                                                                        <td><?php echo htmlspecialchars($registro['especialidad'] ?? '-'); ?></td>
+                                                                                                        <td><?php echo htmlspecialchars($registro['certificacion'] ?? '-'); ?></td>
+                                                                                                        <td><?php echo htmlspecialchars($registro['disponibilidad'] ?? '-'); ?></td>
+                                                                                                        <td class="text-end">
+                                                                                                                <a class="btn btn-sm btn-outline-danger" href="?action=delete&id=<?php echo urlencode($registro['id']); ?>" onclick="return confirm('¿Eliminar este entrenador?');">Eliminar</a>
+                                                                                                        </td>
+                                                                                                </tr>
+                                                                                        <?php endforeach; ?>
+                                                                                <?php endif; ?>
+                                                                        </tbody>
+                                                                </table>
                                                         </div>
                                                 </div>
                                         </div>
