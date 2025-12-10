@@ -7,8 +7,14 @@ const ARBITROS_STORE = 'arbitros.json';
 
 $arbitros = load_json(ARBITROS_STORE);
 $sedeStore = load_json('sedes.json');
+$arbitroEditando = null;
+
+if (($_GET['action'] ?? '') === 'editar' && isset($_GET['id'])) {
+    $arbitroEditando = find_by_id($arbitros, $_GET['id']);
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id = trim($_POST['id'] ?? '');
     $nombre = trim($_POST['nombre'] ?? '');
     $rol = trim($_POST['rol'] ?? '');
     $telefono = trim($_POST['telefono'] ?? '');
@@ -19,19 +25,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($nombre === '' || $rol === '') {
         $_SESSION['arbitro_error'] = 'El nombre y el rol son obligatorios.';
     } else {
-        $arbitros[] = [
-            'id' => uniqid('arb_', true),
-            'nombre' => $nombre,
-            'rol' => $rol,
-            'telefono' => $telefono,
-            'mesa' => $mesa,
-            'disponibilidad' => $disponibilidad,
-            'licencia' => $licencia,
-            'created_at' => date(DATE_ATOM),
-        ];
+        if ($id !== '') {
+            $arbitros = array_map(function ($item) use ($id, $nombre, $rol, $telefono, $mesa, $disponibilidad, $licencia) {
+                if (($item['id'] ?? '') !== $id) {
+                    return $item;
+                }
+
+                return array_merge($item, [
+                    'nombre' => $nombre,
+                    'rol' => $rol,
+                    'telefono' => $telefono,
+                    'mesa' => $mesa,
+                    'disponibilidad' => $disponibilidad,
+                    'licencia' => $licencia,
+                    'updated_at' => date(DATE_ATOM),
+                ]);
+            }, $arbitros);
+        } else {
+            $arbitros[] = [
+                'id' => uniqid('arb_', true),
+                'nombre' => $nombre,
+                'rol' => $rol,
+                'telefono' => $telefono,
+                'mesa' => $mesa,
+                'disponibilidad' => $disponibilidad,
+                'licencia' => $licencia,
+                'created_at' => date(DATE_ATOM),
+            ];
+        }
 
         if (save_json(ARBITROS_STORE, $arbitros)) {
-            $_SESSION['arbitro_success'] = 'Registro guardado correctamente.';
+            $_SESSION['arbitro_success'] = $id !== '' ? 'Registro actualizado correctamente.' : 'Registro guardado correctamente.';
         } else {
             $_SESSION['arbitro_error'] = 'No fue posible guardar el registro. Verifica la conexión a la base de datos.';
         }
@@ -113,22 +137,27 @@ $errorMessage = flash('arbitro_error');
                                                             <?php endif; ?>
 
                                                             <form method="post" class="row g-3">
+                                                                <input type="hidden" name="id" value="<?php echo htmlspecialchars($arbitroEditando['id'] ?? ''); ?>">
                                                                 <div class="col-12">
                                                                     <label class="form-label">Nombre completo</label>
-                                                                    <input type="text" name="nombre" class="form-control" required>
+                                                                    <input type="text" name="nombre" class="form-control" required value="<?php echo htmlspecialchars($arbitroEditando['nombre'] ?? ''); ?>">
                                                                 </div>
                                                                 <div class="col-12">
                                                                     <label class="form-label">Rol</label>
                                                                     <select name="rol" class="form-control" required>
                                                                         <option value="">Selecciona</option>
-                                                                        <option>Árbitro</option>
-                                                                        <option>Anotador</option>
-                                                                        <option>Coordinador</option>
+                                                                        <?php
+                                                                        $roles = ['Árbitro', 'Anotador', 'Coordinador'];
+                                                                        foreach ($roles as $rolOpcion):
+                                                                            $selected = ($arbitroEditando['rol'] ?? '') === $rolOpcion ? 'selected' : '';
+                                                                            echo "<option value=\"" . htmlspecialchars($rolOpcion) . "\" $selected>" . htmlspecialchars($rolOpcion) . "</option>";
+                                                                        endforeach;
+                                                                        ?>
                                                                     </select>
                                                                 </div>
                                                                 <div class="col-12">
                                                                     <label class="form-label">Licencia / Certificación</label>
-                                                                    <input type="text" name="licencia" class="form-control" placeholder="Ej. ITTF Nivel 1">
+                                                                    <input type="text" name="licencia" class="form-control" placeholder="Ej. ITTF Nivel 1" value="<?php echo htmlspecialchars($arbitroEditando['licencia'] ?? ''); ?>">
                                                                 </div>
                                                                 <div class="col-12">
                                                                     <label class="form-label">Mesa asignada</label>
@@ -136,21 +165,22 @@ $errorMessage = flash('arbitro_error');
                                                                         <option value="">Sin asignar</option>
                                                                         <?php foreach ($sedeStore as $sede): ?>
                                                                             <?php foreach (($sede['mesas'] ?? []) as $mesa): ?>
-                                                                                <option value="<?php echo htmlspecialchars($mesa); ?>"><?php echo htmlspecialchars(($sede['nombre'] ?? 'Sede') . ' - ' . $mesa); ?></option>
+                                                                                <?php $selectedMesa = ($arbitroEditando['mesa'] ?? '') === $mesa ? 'selected' : ''; ?>
+                                                                                <option value="<?php echo htmlspecialchars($mesa); ?>" <?php echo $selectedMesa; ?>><?php echo htmlspecialchars(($sede['nombre'] ?? 'Sede') . ' - ' . $mesa); ?></option>
                                                                             <?php endforeach; ?>
                                                                         <?php endforeach; ?>
                                                                     </select>
                                                                 </div>
                                                                 <div class="col-12">
                                                                     <label class="form-label">Teléfono</label>
-                                                                    <input type="text" name="telefono" class="form-control" placeholder="Opcional">
+                                                                    <input type="text" name="telefono" class="form-control" placeholder="Opcional" value="<?php echo htmlspecialchars($arbitroEditando['telefono'] ?? ''); ?>">
                                                                 </div>
                                                                 <div class="col-12">
                                                                     <label class="form-label">Disponibilidad</label>
-                                                                    <textarea name="disponibilidad" class="form-control" rows="2" placeholder="Horarios o días disponibles"></textarea>
+                                                                    <textarea name="disponibilidad" class="form-control" rows="2" placeholder="Horarios o días disponibles"><?php echo htmlspecialchars($arbitroEditando['disponibilidad'] ?? ''); ?></textarea>
                                                                 </div>
                                                                 <div class="col-12 text-end">
-                                                                    <button type="submit" class="btn btn-primary">Guardar árbitro</button>
+                                                                    <button type="submit" class="btn btn-primary"><?php echo $arbitroEditando ? 'Actualizar árbitro' : 'Guardar árbitro'; ?></button>
                                                                 </div>
                                                             </form>
                                                         </div>
@@ -191,6 +221,7 @@ $errorMessage = flash('arbitro_error');
                                                                                     <td><?php echo htmlspecialchars($item['telefono'] ?? ''); ?></td>
                                                                                     <td><?php echo htmlspecialchars($item['disponibilidad'] ?? ''); ?></td>
                                                                                     <td class="text-end">
+                                                                                        <a href="?action=editar&id=<?php echo urlencode($item['id']); ?>" class="btn btn-sm btn-outline-primary me-1">Editar</a>
                                                                                         <a href="?action=eliminar&id=<?php echo urlencode($item['id']); ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar registro?');">Eliminar</a>
                                                                                     </td>
                                                                                 </tr>

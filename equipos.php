@@ -17,7 +17,13 @@ foreach ($jugadores as $jugador) {
     }
 }
 
+$equipoEditando = null;
+if (($_GET['action'] ?? '') === 'editar' && isset($_GET['id'])) {
+    $equipoEditando = find_by_id($equipos, $_GET['id']);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id = trim($_POST['id'] ?? '');
     $nombre = trim($_POST['nombre'] ?? '');
     $club = trim($_POST['club'] ?? '');
     $modalidad = trim($_POST['modalidad'] ?? '');
@@ -30,18 +36,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $equipos[] = [
-        'id' => uniqid('eq_', true),
-        'nombre' => $nombre,
-        'club' => $club,
-        'modalidad' => $modalidad,
-        'categoria' => $categoria,
-        'integrantes' => array_values($integrantes),
-        'created_at' => date(DATE_ATOM),
-    ];
+    if ($id !== '') {
+        $equipos = array_map(function ($equipo) use ($id, $nombre, $club, $modalidad, $categoria, $integrantes) {
+            if (($equipo['id'] ?? '') !== $id) {
+                return $equipo;
+            }
+
+            return array_merge($equipo, [
+                'nombre' => $nombre,
+                'club' => $club,
+                'modalidad' => $modalidad,
+                'categoria' => $categoria,
+                'integrantes' => array_values($integrantes),
+                'updated_at' => date(DATE_ATOM),
+            ]);
+        }, $equipos);
+    } else {
+        $equipos[] = [
+            'id' => uniqid('eq_', true),
+            'nombre' => $nombre,
+            'club' => $club,
+            'modalidad' => $modalidad,
+            'categoria' => $categoria,
+            'integrantes' => array_values($integrantes),
+            'created_at' => date(DATE_ATOM),
+        ];
+    }
 
     save_json(TEAM_STORE, $equipos);
-    $_SESSION['equipos_success'] = 'Equipo registrado correctamente.';
+    $_SESSION['equipos_success'] = $id !== '' ? 'Equipo actualizado correctamente.' : 'Equipo registrado correctamente.';
     header('Location: equipos.php');
     exit;
 }
@@ -118,176 +141,188 @@ if (($_GET['action'] ?? '') === 'eliminar' && isset($_GET['id'])) {
                 <!--**********************************
             Content body start
         ***********************************-->
-        <div class="content-body">
-            <div class="container-fluid">
-                <div class="row page-titles">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="panel-principal.php">Panel</a></li>
-                        <li class="breadcrumb-item active"><a href="javascript:void(0)">Clubes y equipos</a></li>
-                    </ol>
-                </div>
-
-                <div class="row">
-                    <div class="col-xl-12">
-                        <div class="card">
-                            <div class="card-header d-sm-flex d-block border-0 pb-0">
-                                <div>
-                                    <h4 class="fs-20 mb-1">Equipos y parejas</h4>
-                                    <span class="fs-14 text-muted">Organiza equipos para ligas y parejas para dobles.</span>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <?php if (!empty($_SESSION['equipos_success'])): ?>
-                                    <div class="alert alert-success alert-dismissible fade show">
-                                        <?php echo htmlspecialchars($_SESSION['equipos_success']); unset($_SESSION['equipos_success']); ?>
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                    </div>
-                                <?php endif; ?>
-                                <?php if (!empty($_SESSION['equipos_error'])): ?>
-                                    <div class="alert alert-danger alert-dismissible fade show">
-                                        <?php echo htmlspecialchars($_SESSION['equipos_error']); unset($_SESSION['equipos_error']); ?>
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                    </div>
-                                <?php endif; ?>
-
-                                <form method="post" class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label">Nombre del equipo</label>
-                                        <input type="text" name="nombre" class="form-control" placeholder="Nombre oficial" required>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">Club</label>
-                                        <select name="club" class="form-control">
-                                            <option value="">Independiente</option>
-                                            <?php foreach ($clubes as $club): ?>
-                                                <option value="<?php echo htmlspecialchars($club['nombre'] ?? ''); ?>"><?php echo htmlspecialchars($club['nombre'] ?? ''); ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">Modalidad</label>
-                                        <select name="modalidad" class="form-control" required>
-                                            <option value="">Selecciona</option>
-                                            <option>Liga por equipos</option>
-                                            <option>Dobles masculino</option>
-                                            <option>Dobles femenino</option>
-                                            <option>Dobles mixto</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Categoría</label>
-                                        <select name="categoria" class="form-control">
-                                            <option value="">General</option>
-                                            <option>Infantil</option>
-                                            <option>Juvenil</option>
-                                            <option>Absoluto</option>
-                                            <option>Senior</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-8">
-                                        <label class="form-label">Integrantes</label>
-                                        <select name="integrantes[]" class="form-control" multiple size="6">
-                                            <?php foreach ($jugadores as $jugador): ?>
-                                                <option value="<?php echo htmlspecialchars($jugador['id'] ?? ''); ?>"><?php echo htmlspecialchars(($jugador['nombre'] ?? '') . ' ' . ($jugador['apellido'] ?? '')); ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                        <small class="text-muted">Mantén Ctrl/Command para seleccionar varios jugadores.</small>
-                                    </div>
-                                    <div class="col-12 text-end">
-                                        <button type="submit" class="btn btn-primary">Guardar equipo</button>
-                                    </div>
-                                </form>
-                            </div>
+                <div class="content-body">
+                    <div class="container-fluid">
+                        <div class="row page-titles">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="panel-principal.php">Panel</a></li>
+                                <li class="breadcrumb-item active"><a href="javascript:void(0)">Equipos</a></li>
+                            </ol>
                         </div>
-                    </div>
-                </div>
 
-                <div class="row">
-                    <div class="col-xl-12">
-                        <div class="card">
-                            <div class="card-header d-sm-flex d-block border-0 pb-0">
-                                <div>
-                                    <h4 class="fs-20 mb-1">Listado de equipos</h4>
-                                    <span class="fs-14 text-muted">Control rápido de equipos inscritos.</span>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>Equipo</th>
-                                                <th>Club</th>
-                                                <th>Modalidad</th>
-                                                <th>Categoría</th>
-                                                <th>Integrantes</th>
-                                                <th class="text-end">Acciones</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                        <?php if (empty($equipos)): ?>
-                                            <tr>
-                                                <td colspan="6" class="text-center text-muted">Aún no hay equipos registrados.</td>
-                                            </tr>
-                                        <?php else: ?>
-                                            <?php foreach ($equipos as $equipo): ?>
-                                                <tr>
-                                                    <td class="fw-bold"><?php echo htmlspecialchars($equipo['nombre'] ?? ''); ?></td>
-                                                    <td><?php echo htmlspecialchars($equipo['club'] ?: 'Libre'); ?></td>
-                                                    <td><?php echo htmlspecialchars($equipo['modalidad'] ?? ''); ?></td>
-                                                    <td><?php echo htmlspecialchars($equipo['categoria'] ?? ''); ?></td>
-                                                    <td>
-                                                        <?php if (empty($equipo['integrantes'])): ?>
-                                                            <span class="text-muted">Por asignar</span>
-                                                        <?php else: ?>
-                                                            <ul class="list-unstyled mb-0">
-                                                                <?php foreach ($equipo['integrantes'] as $integranteId): ?>
-                                                                    <li><?php echo htmlspecialchars(($jugadoresIndex[$integranteId]['nombre'] ?? 'Jugador') . ' ' . ($jugadoresIndex[$integranteId]['apellido'] ?? '')); ?></li>
-                                                                <?php endforeach; ?>
-                                                            </ul>
-                                                        <?php endif; ?>
-                                                    </td>
-                                                    <td class="text-end">
-                                                        <a href="equipos.php?action=eliminar&id=<?php echo urlencode($equipo['id']); ?>" class="btn btn-outline-danger btn-xs" onclick="return confirm('¿Eliminar equipo?');">Eliminar</a>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
+                        <div class="row">
+                            <div class="col-xl-12">
+                                <div class="card">
+                                    <div class="card-header d-sm-flex d-block border-0 pb-0">
+                                        <div>
+                                            <h4 class="fs-20 mb-1">Equipos y parejas</h4>
+                                            <span class="fs-14 text-muted">Organiza equipos para ligas y parejas para dobles.</span>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <?php if (!empty($_SESSION['equipos_success'])): ?>
+                                            <div class="alert alert-success alert-dismissible fade show">
+                                                <?php echo htmlspecialchars($_SESSION['equipos_success']); unset($_SESSION['equipos_success']); ?>
+                                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                            </div>
                                         <?php endif; ?>
-                                        </tbody>
-                                    </table>
+                                        <?php if (!empty($_SESSION['equipos_error'])): ?>
+                                            <div class="alert alert-danger alert-dismissible fade show">
+                                                <?php echo htmlspecialchars($_SESSION['equipos_error']); unset($_SESSION['equipos_error']); ?>
+                                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <form method="post" class="row g-3">
+                                            <input type="hidden" name="id" value="<?php echo htmlspecialchars($equipoEditando['id'] ?? ''); ?>">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Nombre del equipo</label>
+                                                <input type="text" name="nombre" class="form-control" placeholder="Nombre oficial" required value="<?php echo htmlspecialchars($equipoEditando['nombre'] ?? ''); ?>">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">Club</label>
+                                                <select name="club" class="form-control">
+                                                    <option value="">Independiente</option>
+                                                    <?php foreach ($clubes as $club): ?>
+                                                        <?php $selectedClub = ($equipoEditando['club'] ?? '') === ($club['nombre'] ?? '') ? 'selected' : ''; ?>
+                                                        <option value="<?php echo htmlspecialchars($club['nombre'] ?? ''); ?>" <?php echo $selectedClub; ?>><?php echo htmlspecialchars($club['nombre'] ?? ''); ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">Modalidad</label>
+                                                <select name="modalidad" class="form-control" required>
+                                                    <?php
+                                                    $modalidades = [
+                                                        'Liga por equipos',
+                                                        'Dobles masculino',
+                                                        'Dobles femenino',
+                                                        'Dobles mixto',
+                                                    ];
+                                                    $modalidadActual = $equipoEditando['modalidad'] ?? '';
+                                                    echo '<option value="">Selecciona</option>';
+                                                    foreach ($modalidades as $modalidadOpcion) {
+                                                        $selected = $modalidadActual === $modalidadOpcion ? 'selected' : '';
+                                                        echo '<option ' . $selected . '>' . htmlspecialchars($modalidadOpcion) . '</option>';
+                                                    }
+                                                    ?>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Categoría</label>
+                                                <select name="categoria" class="form-control">
+                                                    <?php
+                                                    $categorias = ['General', 'Infantil', 'Juvenil', 'Absoluto', 'Senior'];
+                                                    $categoriaActual = $equipoEditando['categoria'] ?? '';
+                                                    foreach ($categorias as $cat) {
+                                                        $selected = $categoriaActual === $cat ? 'selected' : '';
+                                                        echo '<option ' . $selected . '>' . htmlspecialchars($cat) . '</option>';
+                                                    }
+                                                    ?>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <label class="form-label">Integrantes</label>
+                                                <?php $integrantesSeleccionados = $equipoEditando['integrantes'] ?? []; ?>
+                                                <select name="integrantes[]" class="form-control" multiple size="6">
+                                                    <?php foreach ($jugadores as $jugador): ?>
+                                                        <?php $sel = in_array($jugador['id'] ?? '', $integrantesSeleccionados, true) ? 'selected' : ''; ?>
+                                                        <option value="<?php echo htmlspecialchars($jugador['id'] ?? ''); ?>" <?php echo $sel; ?>><?php echo htmlspecialchars(($jugador['nombre'] ?? '') . ' ' . ($jugador['apellido'] ?? '')); ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                                <small class="text-muted">Mantén Ctrl/Command para seleccionar varios jugadores.</small>
+                                            </div>
+                                            <div class="col-12 text-end">
+                                                <button type="submit" class="btn btn-primary"><?php echo $equipoEditando ? 'Actualizar equipo' : 'Guardar equipo'; ?></button>
+                                            </div>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
+                        <div class="row">
+                            <div class="col-xl-12">
+                                <div class="card">
+                                    <div class="card-header d-sm-flex d-block border-0 pb-0">
+                                        <div>
+                                            <h4 class="fs-20 mb-1">Listado de equipos</h4>
+                                            <span class="fs-14 text-muted">Control rápido de equipos inscritos.</span>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Nombre</th>
+                                                        <th>Club</th>
+                                                        <th>Modalidad</th>
+                                                        <th>Categoría</th>
+                                                        <th>Integrantes</th>
+                                                        <th></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php if (empty($equipos)): ?>
+                                                        <tr><td colspan="6" class="text-center text-muted">Sin registros</td></tr>
+                                                    <?php else: ?>
+                                                        <?php foreach ($equipos as $equipo): ?>
+                                                            <tr>
+                                                                <td><?php echo htmlspecialchars($equipo['nombre'] ?? ''); ?></td>
+                                                                <td><?php echo htmlspecialchars($equipo['club'] ?? ''); ?></td>
+                                                                <td><?php echo htmlspecialchars($equipo['modalidad'] ?? ''); ?></td>
+                                                                <td><?php echo htmlspecialchars($equipo['categoria'] ?? ''); ?></td>
+                                                                <td>
+                                                                    <?php
+                                                                    $nombres = [];
+                                                                    foreach (($equipo['integrantes'] ?? []) as $id) {
+                                                                        if (isset($jugadoresIndex[$id])) {
+                                                                            $nombres[] = ($jugadoresIndex[$id]['nombre'] ?? '') . ' ' . ($jugadoresIndex[$id]['apellido'] ?? '');
+                                                                        }
+                                                                    }
+                                                                    echo htmlspecialchars(implode(', ', $nombres));
+                                                                    ?>
+                                                                </td>
+                                                                <td class="text-end">
+                                                                    <a href="?action=editar&id=<?php echo urlencode($equipo['id']); ?>" class="btn btn-sm btn-outline-primary me-1">Editar</a>
+                                                                    <a href="?action=eliminar&id=<?php echo urlencode($equipo['id']); ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar equipo?');">Eliminar</a>
+                                                                </td>
+                                                            </tr>
+                                                        <?php endforeach; ?>
+                                                    <?php endif; ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
-            </div>
-        </div>
-        <!--**********************************
+                <!--**********************************
             Content body end
         ***********************************-->
-                <!-- Button trigger modal -->
-
-
 
                 <!--**********************************
             Footer start
         ***********************************-->
                 <?php include 'elements/footer.php'; ?>
+                <!--**********************************
+            Footer end
+        ***********************************-->
 
 
-
-
-        </div>
-
-
-        <!--**********************************
-        Scripts
+            </div>
+            <!--**********************************
+        Main wrapper end
     ***********************************-->
 
-        <!-- Required vendors -->
-<?php include 'elements/page-js.php'; ?>
-
+        <!--**********************************
+            Scripts
+        ***********************************-->
+        <?php include 'elements/page-js.php'; ?>
 
 </body>
-
 </html>

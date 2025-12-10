@@ -6,29 +6,52 @@ require_once __DIR__ . '/helpers.php';
 const SEDES_STORE = 'sedes.json';
 
 $sedes = load_json(SEDES_STORE);
+$sedeEditando = null;
+
+if (($_GET['action'] ?? '') === 'editar' && isset($_GET['id'])) {
+    $sedeEditando = find_by_id($sedes, $_GET['id']);
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id = trim($_POST['id'] ?? '');
     $nombre = trim($_POST['nombre'] ?? '');
     $ciudad = trim($_POST['ciudad'] ?? '');
     $direccion = trim($_POST['direccion'] ?? '');
     $capacidad = trim($_POST['capacidad'] ?? '');
-    $mesas = array_filter(array_map('trim', explode('\n', $_POST['mesas'] ?? '')));
+    $mesas = array_filter(array_map('trim', explode("\n", $_POST['mesas'] ?? '')));
 
     if ($nombre === '' || $ciudad === '') {
         $_SESSION['sede_error'] = 'El nombre y la ciudad son obligatorios.';
     } else {
-        $sedes[] = [
-            'id' => uniqid('sede_', true),
-            'nombre' => $nombre,
-            'ciudad' => $ciudad,
-            'direccion' => $direccion,
-            'capacidad' => $capacidad,
-            'mesas' => $mesas,
-            'created_at' => date(DATE_ATOM),
-        ];
+        if ($id !== '') {
+            $sedes = array_map(function ($sede) use ($id, $nombre, $ciudad, $direccion, $capacidad, $mesas) {
+                if (($sede['id'] ?? '') !== $id) {
+                    return $sede;
+                }
+
+                return array_merge($sede, [
+                    'nombre' => $nombre,
+                    'ciudad' => $ciudad,
+                    'direccion' => $direccion,
+                    'capacidad' => $capacidad,
+                    'mesas' => $mesas,
+                    'updated_at' => date(DATE_ATOM),
+                ]);
+            }, $sedes);
+        } else {
+            $sedes[] = [
+                'id' => uniqid('sede_', true),
+                'nombre' => $nombre,
+                'ciudad' => $ciudad,
+                'direccion' => $direccion,
+                'capacidad' => $capacidad,
+                'mesas' => $mesas,
+                'created_at' => date(DATE_ATOM),
+            ];
+        }
 
         if (save_json(SEDES_STORE, $sedes)) {
-            $_SESSION['sede_success'] = 'Sede registrada correctamente.';
+            $_SESSION['sede_success'] = $id !== '' ? 'Sede actualizada correctamente.' : 'Sede registrada correctamente.';
         } else {
             $_SESSION['sede_error'] = 'No se pudo guardar la sede. Revisa la base de datos o permisos de escritura.';
         }
@@ -110,28 +133,29 @@ $errorMessage = flash('sede_error');
                                                             <?php endif; ?>
 
                                                             <form method="post" class="row g-3">
+                                                                <input type="hidden" name="id" value="<?php echo htmlspecialchars($sedeEditando['id'] ?? ''); ?>">
                                                                 <div class="col-12">
                                                                     <label class="form-label">Nombre de la sede</label>
-                                                                    <input type="text" name="nombre" class="form-control" required>
+                                                                    <input type="text" name="nombre" class="form-control" required value="<?php echo htmlspecialchars($sedeEditando['nombre'] ?? ''); ?>">
                                                                 </div>
                                                                 <div class="col-12">
                                                                     <label class="form-label">Ciudad</label>
-                                                                    <input type="text" name="ciudad" class="form-control" required>
+                                                                    <input type="text" name="ciudad" class="form-control" required value="<?php echo htmlspecialchars($sedeEditando['ciudad'] ?? ''); ?>">
                                                                 </div>
                                                                 <div class="col-12">
                                                                     <label class="form-label">Dirección</label>
-                                                                    <input type="text" name="direccion" class="form-control" placeholder="Opcional">
+                                                                    <input type="text" name="direccion" class="form-control" placeholder="Opcional" value="<?php echo htmlspecialchars($sedeEditando['direccion'] ?? ''); ?>">
                                                                 </div>
                                                                 <div class="col-12">
-                                                                    <label class="form-label">Capacidad / notas</label>
-                                                                    <input type="text" name="capacidad" class="form-control" placeholder="Ej. 200 espectadores">
+                                                                    <label class="form-label">Capacidad estimada</label>
+                                                                    <input type="number" name="capacidad" class="form-control" placeholder="Ej. 200" value="<?php echo htmlspecialchars($sedeEditando['capacidad'] ?? ''); ?>">
                                                                 </div>
                                                                 <div class="col-12">
                                                                     <label class="form-label">Mesas disponibles (una por línea)</label>
-                                                                    <textarea name="mesas" class="form-control" rows="4" placeholder="Mesa 1\nMesa 2\nMesa 3"></textarea>
+                                                                    <textarea name="mesas" class="form-control" rows="3" placeholder="Mesa 1\nMesa 2\nMesa 3"><?php echo htmlspecialchars(isset($sedeEditando['mesas']) ? implode("\n", $sedeEditando['mesas']) : ''); ?></textarea>
                                                                 </div>
                                                                 <div class="col-12 text-end">
-                                                                    <button type="submit" class="btn btn-primary">Guardar sede</button>
+                                                                    <button type="submit" class="btn btn-primary"><?php echo $sedeEditando ? 'Actualizar sede' : 'Guardar sede'; ?></button>
                                                                 </div>
                                                             </form>
                                                         </div>
@@ -141,13 +165,13 @@ $errorMessage = flash('sede_error');
                                                 <div class="card">
                                                         <div class="card-header border-0 pb-0">
                                                             <div>
-                                                                <h4 class="fs-20 mb-1">Sedes registradas</h4>
-                                                                <span class="fs-14 text-muted">Mesas y logística</span>
+                                                                <h4 class="fs-20 mb-1">Sedes y mesas</h4>
+                                                                <span class="fs-14 text-muted">Administra la infraestructura</span>
                                                             </div>
                                                         </div>
                                                         <div class="card-body">
                                                             <div class="table-responsive">
-                                                                <table class="table table-hover align-middle">
+                                                                <table class="table table-striped align-middle">
                                                                     <thead>
                                                                         <tr>
                                                                             <th>Nombre</th>
@@ -168,19 +192,10 @@ $errorMessage = flash('sede_error');
                                                                                     <td><?php echo htmlspecialchars($sede['ciudad'] ?? ''); ?></td>
                                                                                     <td><?php echo htmlspecialchars($sede['direccion'] ?? ''); ?></td>
                                                                                     <td><?php echo htmlspecialchars($sede['capacidad'] ?? ''); ?></td>
-                                                                                    <td>
-                                                                                        <?php if (!empty($sede['mesas'])): ?>
-                                                                                            <ul class="mb-0 ps-3">
-                                                                                                <?php foreach ($sede['mesas'] as $mesa): ?>
-                                                                                                    <li><?php echo htmlspecialchars($mesa); ?></li>
-                                                                                                <?php endforeach; ?>
-                                                                                            </ul>
-                                                                                        <?php else: ?>
-                                                                                            <span class="text-muted">Sin mesas cargadas</span>
-                                                                                        <?php endif; ?>
-                                                                                    </td>
+                                                                                    <td><?php echo htmlspecialchars(implode(', ', $sede['mesas'] ?? [])); ?></td>
                                                                                     <td class="text-end">
-                                                                                        <a href="?action=eliminar&id=<?php echo urlencode($sede['id']); ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar la sede?');">Eliminar</a>
+                                                                                        <a href="?action=editar&id=<?php echo urlencode($sede['id']); ?>" class="btn btn-sm btn-outline-primary me-1">Editar</a>
+                                                                                        <a href="?action=eliminar&id=<?php echo urlencode($sede['id']); ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar sede?');">Eliminar</a>
                                                                                     </td>
                                                                                 </tr>
                                                                             <?php endforeach; ?>
@@ -202,3 +217,5 @@ $errorMessage = flash('sede_error');
 
 
 </body>
+
+</html>
