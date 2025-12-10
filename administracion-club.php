@@ -39,7 +39,7 @@
                                                                                 <ul class="mb-0">
                                                                                         <li>Identidad corporativa: nombre, RUT/ID fiscal, contactos y horarios.</li>
                                                                                         <li>Colores, logotipo y personalización de marca en portales y comunicaciones.</li>
-                                                                                        <li>Categorías internas (Sub-11, Sub-13, adultos, etc.) y reglas por categoría.</li>
+                                                                                        <li>Categorías internas (Sub-11, Sub-13, Sub-15, Sub-19, Todo competidor, Máster, etc.) y reglas por categoría.</li>
                                                                                 </ul>
                                                                         </div>
                                                                 </div>
