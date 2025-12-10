@@ -1,0 +1,11 @@
+[
+  {
+    "id": 1,
+    "nombre": "Super Administrador",
+    "username": "eisla",
+    "email": "eisla@local.test",
+    "password_hash": "$2y$12$V3vU5mR2SQeE/ABIBPyb/e.qcyA/p1WuelpOGEirv4lay4AzTphB6",
+    "rol": "Administrador",
+    "created_at": "2024-01-01T00:00:00Z"
+  }
+]
