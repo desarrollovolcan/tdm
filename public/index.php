@@ -10,9 +10,13 @@ require_once __DIR__ . '/../app/controllers/MatchController.php';
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
 
-if ($uri === '/' && isset($_SESSION['user'])) {
-    $controller = new DashboardController($pdo);
-    $controller->index();
+if ($uri === '/') {
+    if (isset($_SESSION['user'])) {
+        $controller = new DashboardController($pdo);
+        $controller->index();
+    } else {
+        header('Location: /login');
+    }
     exit;
 }
 
