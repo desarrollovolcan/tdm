@@ -34,6 +34,19 @@ function save_json(string $file, array $payload): void
     file_put_contents($path, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 }
 
+function next_incremental_id(array $items, string $field = 'id'): int
+{
+    $current = 0;
+
+    foreach ($items as $item) {
+        if (isset($item[$field]) && is_numeric($item[$field])) {
+            $current = max($current, (int) $item[$field]);
+        }
+    }
+
+    return $current + 1;
+}
+
 function flash(string $key, ?string $value = null): ?string
 {
     if ($value !== null) {

@@ -1,69 +1,58 @@
 <?php
-         require_once __DIR__ . '/config/dz.php';
+require_once __DIR__ . '/auth-guard.php';
+require_once __DIR__ . '/config/dz.php';
+require_once __DIR__ . '/helpers.php';
+
+const CONFIG_STORE = 'configuracion.json';
+
+$config = load_json(CONFIG_STORE);
+$config = $config ?: [
+    'organizacion' => 'Federación local de tenis de mesa',
+    'correo' => 'contacto@example.com',
+    'telefono' => '+00 000 0000',
+    'reglamento' => 'https://',
+    'mensaje_portal' => 'Bienvenido al sistema de campeonatos.',
+];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $config['organizacion'] = trim($_POST['organizacion'] ?? $config['organizacion']);
+    $config['correo'] = trim($_POST['correo'] ?? $config['correo']);
+    $config['telefono'] = trim($_POST['telefono'] ?? $config['telefono']);
+    $config['reglamento'] = trim($_POST['reglamento'] ?? $config['reglamento']);
+    $config['mensaje_portal'] = trim($_POST['mensaje_portal'] ?? $config['mensaje_portal']);
+
+    save_json(CONFIG_STORE, $config);
+    $_SESSION['config_success'] = 'Configuración guardada correctamente.';
+    header('Location: configuracion.php');
+    exit;
+}
+
+$successMessage = flash('config_success');
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
-        <title><?php echo !empty(['pagelevel'][]['title']) ? ['pagelevel'][]['title'].' | ' : '' ; echo ['site_level']['site_title'] ?></title>
+        <title>Configuración</title>
         <?php include 'elements/meta.php';?>
-        <!-- FAVICONS ICON -->
-        <link rel="shortcut icon" type="image/png" href="<?php echo ['site_level']['favicon']?>">
+        <link rel="shortcut icon" type="image/png" href="<?php echo $DexignZoneSettings['site_level']['favicon']?>">
         <?php include 'elements/page-css.php'; ?>
 
 </head>
 <body>
 
-    <!--*******************
-        Preloader start
-    ********************-->
    <?php include 'elements/preloader.php'; ?>
-    <!--*******************
-        Preloader end
-    ********************-->
 
-    <!--**********************************
-        Main wrapper start
-    ***********************************-->
     <div id="main-wrapper">
 
-        <!--**********************************
-            Nav header start
-        ***********************************-->
       <?php include 'elements/nav-header.php'; ?>
-        <!--**********************************
-            Nav header end
-        ***********************************-->
 
-                <!--**********************************
-            Chat box start
-        ***********************************-->
                 <?php include 'elements/chatbox.php'; ?>
-                <!--**********************************
-            Chat box End
-        ***********************************-->
 
-                <!--**********************************
-            Header start
-        ***********************************-->
                         <?php include 'elements/header.php'; ?>
 
-
-        <!--**********************************
-            Header end ti-comment-alt
-        ***********************************-->
-
-        <!--**********************************
-            Sidebar start
-        ***********************************-->
                 <?php include 'elements/sidebar.php'; ?>
-        <!--**********************************
-            Sidebar end
-        ***********************************-->
 
-                <!--**********************************
-            Content body start
-        ***********************************-->
         <div class="content-body">
                         <div class="container-fluid">
 
@@ -73,50 +62,78 @@
                                                 <li class="breadcrumb-item active"><a href="javascript:void(0)">Administración</a></li>
                                         </ol>
                 </div>
-                                <!-- Row -->
                                 <div class="row">
-                                        <div class="col-xl-12">
+                                        <div class="col-xl-7">
                                                 <div class="card">
                                                         <div class="card-header d-sm-flex d-block border-0 pb-0">
                                                                 <div>
-                                                                        <h4 class="fs-20 mb-1">Configuración de campeonato</h4>
-                                                                        <span class="fs-14 text-muted">Define parámetros generales, reglamentos y branding</span>
+                                                                        <h4 class="fs-20 mb-1">Datos generales</h4>
+                                                                        <span class="fs-14 text-muted">Personaliza el portal</span>
                                                                 </div>
                                                         </div>
                                                         <div class="card-body">
-                                                                <p class="mb-0">Define parámetros generales, reglamentos y branding</p>
+                                                            <?php if ($successMessage): ?>
+                                                                <div class="alert alert-success alert-dismissible fade show">
+                                                                    <?php echo htmlspecialchars($successMessage); ?>
+                                                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                                                </div>
+                                                            <?php endif; ?>
+
+                                                            <form method="post" class="row g-3">
+                                                                <div class="col-12">
+                                                                    <label class="form-label">Organización</label>
+                                                                    <input type="text" name="organizacion" class="form-control" value="<?php echo htmlspecialchars($config['organizacion']); ?>" required>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <label class="form-label">Correo de contacto</label>
+                                                                    <input type="email" name="correo" class="form-control" value="<?php echo htmlspecialchars($config['correo']); ?>" required>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <label class="form-label">Teléfono</label>
+                                                                    <input type="text" name="telefono" class="form-control" value="<?php echo htmlspecialchars($config['telefono']); ?>">
+                                                                </div>
+                                                                <div class="col-12">
+                                                                    <label class="form-label">URL reglamento</label>
+                                                                    <input type="url" name="reglamento" class="form-control" value="<?php echo htmlspecialchars($config['reglamento']); ?>">
+                                                                </div>
+                                                                <div class="col-12">
+                                                                    <label class="form-label">Mensaje de portada</label>
+                                                                    <textarea name="mensaje_portal" class="form-control" rows="3"><?php echo htmlspecialchars($config['mensaje_portal']); ?></textarea>
+                                                                </div>
+                                                                <div class="col-12 text-end">
+                                                                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                </div>
+                                        </div>
+                                        <div class="col-xl-5">
+                                                <div class="card">
+                                                        <div class="card-header border-0 pb-0">
+                                                            <div>
+                                                                <h4 class="fs-20 mb-1">Resumen</h4>
+                                                                <span class="fs-14 text-muted">Datos que verán los usuarios</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <ul class="list-unstyled mb-0">
+                                                                <li class="mb-3"><strong>Organización:</strong> <?php echo htmlspecialchars($config['organizacion']); ?></li>
+                                                                <li class="mb-3"><strong>Contacto:</strong> <?php echo htmlspecialchars($config['correo']); ?></li>
+                                                                <li class="mb-3"><strong>Teléfono:</strong> <?php echo htmlspecialchars($config['telefono']); ?></li>
+                                                                <li class="mb-3"><strong>Reglamento:</strong> <a href="<?php echo htmlspecialchars($config['reglamento']); ?>" target="_blank" rel="noreferrer">Ver enlace</a></li>
+                                                                <li><strong>Mensaje portada:</strong><br><?php echo nl2br(htmlspecialchars($config['mensaje_portal'])); ?></li>
+                                                            </ul>
                                                         </div>
                                                 </div>
                                         </div>
                                 </div>
                         </div>
         </div>
-        <!--**********************************
-            Content body end
-        ***********************************-->
-                <!-- Button trigger modal -->
-
-
-
-                <!--**********************************
-            Footer start
-        ***********************************-->
                 <?php include 'elements/footer.php'; ?>
-
-
-
 
         </div>
 
-
-        <!--**********************************
-        Scripts
-    ***********************************-->
-
-        <!-- Required vendors -->
-<?php include 'elements/page-js.php'; ?>
+        <?php include 'elements/page-js.php'; ?>
 
 
 </body>
-
-</html>

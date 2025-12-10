@@ -64,6 +64,11 @@ function findUserByIdentifier(array $users, string $identifier): ?array
     return null;
 }
 
+// Si el archivo se incluye para reutilizar funciones, no ejecutar la lógica de routing.
+if (basename(__FILE__) !== basename($_SERVER['SCRIPT_FILENAME'])) {
+    return;
+}
+
 $action = $_POST['action'] ?? ($_GET['action'] ?? null);
 $users = ensureRootUser(loadUsers(), $roles);
 saveUsers($users);
