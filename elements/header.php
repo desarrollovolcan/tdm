@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/../db.php';
+$dbStatus = db_status();
+?>
 <div class="header">
 	<div class="header-content">
 		<nav class="navbar navbar-expand">
@@ -20,6 +24,12 @@
 				</div>
                                 <?php $sessionUser = $_SESSION['user'] ?? null; ?>
                                 <ul class="navbar-nav header-right">
+                                        <li class="nav-item d-flex align-items-center me-3">
+                                                <span class="badge <?php echo $dbStatus['connected'] ? 'bg-success' : 'bg-danger'; ?>">
+                                                        BD: <?php echo $dbStatus['connected'] ? 'Conectada' : 'Sin conexión'; ?>
+                                                </span>
+                                                <small class="ms-2 text-muted">config: db.php</small>
+                                        </li>
 					<li class="nav-item dropdown notification_dropdown">
 						<a class="nav-link bell dz-theme-mode p-0" href="javascript:void(0);">
 							<i id="icon-light" class="flaticon-sun"></i>

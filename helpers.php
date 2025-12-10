@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/db.php';
+
 /**
  * Simple JSON storage helpers for the demo environment.
  */
@@ -12,6 +14,26 @@ function storage_path(string $file): string
 
 function load_json(string $file): array
 {
+    $conn = db();
+
+    if ($conn instanceof mysqli) {
+        $stmt = $conn->prepare('SELECT payload FROM json_storage WHERE file = ?');
+        if ($stmt) {
+            $stmt->bind_param('s', $file);
+            if ($stmt->execute()) {
+                $stmt->bind_result($payload);
+                if ($stmt->fetch()) {
+                    $stmt->close();
+                    $data = json_decode((string) $payload, true);
+                    if (is_array($data)) {
+                        return $data;
+                    }
+                }
+            }
+            $stmt->close();
+        }
+    }
+
     $path = storage_path($file);
     if (!file_exists($path)) {
         if (!is_dir(dirname($path))) {
@@ -30,6 +52,19 @@ function load_json(string $file): array
 
 function save_json(string $file, array $payload): bool
 {
+    $json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+
+    $dbSaved = false;
+    $conn = db();
+    if ($conn instanceof mysqli) {
+        $stmt = $conn->prepare('INSERT INTO json_storage (file, payload) VALUES (?, ?) ON DUPLICATE KEY UPDATE payload = VALUES(payload)');
+        if ($stmt) {
+            $stmt->bind_param('ss', $file, $json);
+            $dbSaved = $stmt->execute();
+            $stmt->close();
+        }
+    }
+
     $path = storage_path($file);
     $dir = dirname($path);
     if (!is_dir($dir)) {
@@ -38,11 +73,11 @@ function save_json(string $file, array $payload): bool
 
     $bytes = file_put_contents(
         $path,
-        json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+        $json,
         LOCK_EX
     );
 
-    return $bytes !== false;
+    return $dbSaved || $bytes !== false;
 }
 
 function next_incremental_id(array $items, string $field = 'id'): int
