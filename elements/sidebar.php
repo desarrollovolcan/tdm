@@ -36,11 +36,14 @@
             <li>
                 <a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
                     <i class="flaticon-handshake"></i>
-                    <span class="nav-text">Clubes y equipos</span>
+                    <span class="nav-text">Clubes y Entrenamientos</span>
                 </a>
                 <ul aria-expanded="false" class="left">
-                    <li class="nav-text-icon-toggle">Clubes y equipos</li>
-                    <li><a class="dz-active" href="clubes.php">Clubes y asociaciones</a></li>
+                    <li class="nav-text-icon-toggle">Clubes y Entrenamientos</li>
+                    <li><a class="dz-active" href="clubes.php">Clubes</a></li>
+                    <li><a class="dz-active" href="socios.php">Integrantes / Socios</a></li>
+                    <li><a class="dz-active" href="entrenamientos.php">Entrenamientos</a></li>
+                    <li><a class="dz-active" href="planes-entrenamiento.php">Planes de Entrenamiento</a></li>
                     <li><a class="dz-active" href="equipos.php">Equipos y parejas</a></li>
                 </ul>
             </li>
