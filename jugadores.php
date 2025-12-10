@@ -1,34 +1,13 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth-guard.php';
 require_once __DIR__ . '/config/dz.php';
+require_once __DIR__ . '/helpers.php';
 
-const PLAYER_STORE = __DIR__ . '/database/jugadores.json';
-const CLUB_STORE = __DIR__ . '/database/clubes.json';
+const PLAYER_STORE = 'jugadores.json';
+const CLUB_STORE = 'clubes.json';
 
-function loadStore(string $path): array
-{
-    if (!file_exists($path)) {
-        return [];
-    }
-
-    $json = file_get_contents($path);
-    $data = json_decode($json, true);
-
-    return is_array($data) ? $data : [];
-}
-
-function persistStore(string $path, array $payload): void
-{
-    $dir = dirname($path);
-    if (!is_dir($dir)) {
-        mkdir($dir, 0777, true);
-    }
-
-    file_put_contents($path, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-}
-
-$jugadores = loadStore(PLAYER_STORE);
-$clubes = loadStore(CLUB_STORE);
+$jugadores = load_json(PLAYER_STORE);
+$clubes = load_json(CLUB_STORE);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombre = trim($_POST['nombre'] ?? '');
@@ -61,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'created_at' => date(DATE_ATOM),
     ];
 
-    persistStore(PLAYER_STORE, $jugadores);
+    save_json(PLAYER_STORE, $jugadores);
     $_SESSION['jugadores_success'] = 'Jugador registrado correctamente.';
     header('Location: jugadores.php');
     exit;
@@ -70,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (($_GET['action'] ?? '') === 'eliminar' && isset($_GET['id'])) {
     $id = $_GET['id'];
     $jugadores = array_values(array_filter($jugadores, fn($jugador) => ($jugador['id'] ?? '') !== $id));
-    persistStore(PLAYER_STORE, $jugadores);
+    save_json(PLAYER_STORE, $jugadores);
     $_SESSION['jugadores_success'] = 'Jugador eliminado correctamente.';
     header('Location: jugadores.php');
     exit;

@@ -1,10 +1,11 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth-guard.php';
 require_once __DIR__ . '/config/dz.php';
+require_once __DIR__ . '/helpers.php';
 
-const TEAM_STORE = __DIR__ . '/database/equipos.json';
-const PLAYER_STORE = __DIR__ . '/database/jugadores.json';
-const CLUB_STORE = __DIR__ . '/database/clubes.json';
+const TEAM_STORE = 'equipos.json';
+const PLAYER_STORE = 'jugadores.json';
+const CLUB_STORE = 'clubes.json';
 
 function loadData(string $path): array
 {
@@ -28,9 +29,9 @@ function saveData(string $path, array $payload): void
     file_put_contents($path, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 }
 
-$equipos = loadData(TEAM_STORE);
-$jugadores = loadData(PLAYER_STORE);
-$clubes = loadData(CLUB_STORE);
+$equipos = load_json(TEAM_STORE);
+$jugadores = load_json(PLAYER_STORE);
+$clubes = load_json(CLUB_STORE);
 $jugadoresIndex = [];
 foreach ($jugadores as $jugador) {
     if (!empty($jugador['id'])) {

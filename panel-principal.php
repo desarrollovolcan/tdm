@@ -1,5 +1,6 @@
-<?php 
-	 require_once __DIR__ . '/config/dz.php';
+<?php
+require_once __DIR__ . '/auth-guard.php';
+require_once __DIR__ . '/config/dz.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">

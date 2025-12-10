@@ -1,32 +1,11 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth-guard.php';
 require_once __DIR__ . '/config/dz.php';
+require_once __DIR__ . '/helpers.php';
 
-const CLUB_STORE = __DIR__ . '/database/clubes.json';
+const CLUB_STORE = 'clubes.json';
 
-function loadClubStore(): array
-{
-    if (!file_exists(CLUB_STORE)) {
-        return [];
-    }
-
-    $json = file_get_contents(CLUB_STORE);
-    $decoded = json_decode($json, true);
-
-    return is_array($decoded) ? $decoded : [];
-}
-
-function persistClubStore(array $clubes): void
-{
-    $dir = dirname(CLUB_STORE);
-    if (!is_dir($dir)) {
-        mkdir($dir, 0777, true);
-    }
-
-    file_put_contents(CLUB_STORE, json_encode($clubes, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-}
-
-$clubes = loadClubStore();
+$clubes = load_json(CLUB_STORE);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombre = trim($_POST['nombre'] ?? '');
@@ -53,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'created_at' => date(DATE_ATOM),
     ];
 
-    persistClubStore($clubes);
+    save_json(CLUB_STORE, $clubes);
     $_SESSION['club_success'] = 'Club registrado correctamente.';
     header('Location: clubes.php');
     exit;
@@ -62,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (($_GET['action'] ?? '') === 'eliminar' && isset($_GET['id'])) {
     $id = $_GET['id'];
     $clubes = array_values(array_filter($clubes, fn($club) => ($club['id'] ?? '') !== $id));
-    persistClubStore($clubes);
+    save_json(CLUB_STORE, $clubes);
     $_SESSION['club_success'] = 'Club eliminado correctamente.';
     header('Location: clubes.php');
     exit;
