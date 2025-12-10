@@ -13,16 +13,23 @@ class PlayerController extends BaseController
     {
         $playerModel = new Player($this->pdo);
         $data = [
-            'name' => htmlspecialchars($_POST['name']),
-            'document' => htmlspecialchars($_POST['document']),
-            'birthdate' => $_POST['birthdate'],
-            'club' => htmlspecialchars($_POST['club']),
-            'category' => $_POST['category'],
-            'gender' => $_POST['gender'],
-            'email' => filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL),
-            'phone' => htmlspecialchars($_POST['phone']),
-            'ranking' => $_POST['ranking'],
+            'name' => trim($_POST['name'] ?? ''),
+            'document' => trim($_POST['document'] ?? ''),
+            'birthdate' => $_POST['birthdate'] ?? null,
+            'club' => trim($_POST['club'] ?? ''),
+            'category' => $_POST['category'] ?? null,
+            'gender' => $_POST['gender'] ?? null,
+            'email' => filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL),
+            'phone' => trim($_POST['phone'] ?? ''),
+            'ranking' => $_POST['ranking'] ?? '',
         ];
+
+        if (!$data['name'] || !$data['document'] || !$data['birthdate'] || !$data['club'] || !$data['category'] || !$data['gender'] || !$data['email'] || !$data['phone']) {
+            $error = 'Todos los campos obligatorios deben completarse correctamente.';
+            $this->render('players/register', compact('error'));
+            return;
+        }
+
         $playerModel->create($data);
         $success = true;
         $this->render('players/register', compact('success'));
@@ -30,7 +37,7 @@ class PlayerController extends BaseController
 
     public function index()
     {
-        $this->ensureAdmin();
+        $this->requireAdmin();
         $playerModel = new Player($this->pdo);
         $players = $playerModel->all();
         $this->render('players/index', compact('players'));
@@ -38,19 +45,12 @@ class PlayerController extends BaseController
 
     public function updateRanking()
     {
-        $this->ensureAdmin();
+        $this->requireAdmin();
         $playerModel = new Player($this->pdo);
         foreach ($_POST['ranking'] as $playerId => $ranking) {
             $rankingValue = $ranking !== '' ? (int)$ranking : null;
             $playerModel->updateRanking($playerId, $rankingValue);
         }
         $this->redirect('/players');
-    }
-
-    private function ensureAdmin()
-    {
-        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-            $this->redirect('/login');
-        }
     }
 }

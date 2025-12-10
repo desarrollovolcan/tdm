@@ -1,3 +1,8 @@
-body { font-family: 'Inter', Arial, sans-serif; }
-.card { border: 1px solid #e5e7eb; }
-.navbar-brand { font-weight: 600; }
+body { font-family: 'Inter', Arial, sans-serif; background: radial-gradient(circle at top left, #f3f6ff 0%, #e9eef7 45%, #eef2f7 100%); min-height: 100vh; }
+.card { border: 1px solid rgba(0,0,0,0.03); }
+.navbar-brand { font-weight: 700; letter-spacing: .5px; }
+.shadow-soft { box-shadow: 0 10px 30px rgba(31, 64, 111, 0.08); }
+.page-heading { display:flex; align-items:center; gap:.5rem; }
+.page-heading .accent { width:8px; height:32px; background: linear-gradient(180deg, #0d6efd 0%, #1e2a78 100%); border-radius:6px; }
+table thead th { background: #eef2f7; }
+.badge-stage { background-color: #0d6efd; }

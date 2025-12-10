@@ -21,4 +21,25 @@ class BaseController
         header('Location: ' . $path);
         exit;
     }
+
+    protected function requireAuth()
+    {
+        if (!isset($_SESSION['user'])) {
+            $this->redirect('/login');
+        }
+    }
+
+    protected function requireAdmin()
+    {
+        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
+            $this->redirect('/login');
+        }
+    }
+
+    protected function requireOfficial()
+    {
+        if (!isset($_SESSION['user']) || !in_array($_SESSION['user']['role'], ['admin', 'referee'])) {
+            $this->redirect('/login');
+        }
+    }
 }

@@ -1,3 +1,12 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="page-heading">
+        <span class="accent"></span>
+        <div>
+            <p class="text-muted mb-0 small">Estado general</p>
+            <h4 class="mb-0">Dashboard</h4>
+        </div>
+    </div>
+</div>
 <div class="row g-3 mb-4">
     <div class="col-md-3">
         <div class="card text-bg-primary h-100">
@@ -32,7 +41,7 @@
         </div>
     </div>
 </div>
-<div class="card shadow-sm">
+<div class="card shadow-soft border-0">
     <div class="card-body">
         <h5 class="card-title">Resumen de campeonatos</h5>
         <table class="table table-sm">

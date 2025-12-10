@@ -20,6 +20,16 @@ if ($uri === '/') {
     exit;
 }
 
+if ($method === 'GET' && $uri === '/dashboard') {
+    (new DashboardController($pdo))->index();
+    exit;
+}
+
+if ($method === 'GET' && preg_match('#^/matches/(\\d+)$#', $uri, $matches)) {
+    (new MatchController($pdo))->show((int)$matches[1]);
+    exit;
+}
+
 switch ([$method, $uri]) {
     case ['GET', '/login']:
         (new AuthController($pdo))->loginForm();

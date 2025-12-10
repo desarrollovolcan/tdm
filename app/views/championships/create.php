@@ -1,8 +1,17 @@
 <div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card shadow-sm">
+    <div class="col-md-9">
+        <div class="card shadow-soft border-0">
             <div class="card-body">
-                <h5 class="card-title mb-3">Nuevo campeonato</h5>
+                <div class="page-heading mb-3">
+                    <span class="accent"></span>
+                    <div>
+                        <p class="text-muted mb-0 small">Configuración ITTF</p>
+                        <h4 class="mb-0">Nuevo campeonato</h4>
+                    </div>
+                </div>
+                <?php if(isset($error)): ?>
+                    <div class="alert alert-warning"><?php echo $error; ?></div>
+                <?php endif; ?>
                 <form method="POST" action="/championships">
                     <div class="row g-3">
                         <div class="col-md-6">

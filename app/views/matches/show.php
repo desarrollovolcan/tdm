@@ -6,7 +6,12 @@
             <h5 class="card-title">Registro de resultado</h5>
             <?php if(isset($success)): ?><div class="alert alert-success">Resultado guardado</div><?php endif; ?>
             <?php if(isset($error)): ?><div class="alert alert-danger"><?php echo $error; ?></div><?php endif; ?>
-            <p class="lead">Jugador A vs Jugador B (ID <?php echo $match['id']; ?>)</p>
+            <p class="lead">
+                <strong><?php echo htmlspecialchars($match['player1_name']); ?></strong>
+                vs
+                <strong><?php echo htmlspecialchars($match['player2_name']); ?></strong>
+                <span class="badge bg-secondary ms-2">#<?php echo $match['id']; ?></span>
+            </p>
             <form method="POST" action="/matches/result">
                 <input type="hidden" name="match_id" value="<?php echo $match['id']; ?>">
                 <?php for($i=1; $i<=7; $i++): ?>
